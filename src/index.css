@@ -1,0 +1,72 @@
+/* ========== Fonts ========== */
+@import url("https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300..700&family=Plus+Jakarta+Sans:wght@400..800&display=swap");
+
+/* ========== Variables ========== */
+:root {
+  /* 👇 Font stacks — change here to update everywhere */
+  /* Latin in Plus Jakarta Sans, Khmer falls through to Kantumruy Pro */
+  --font-body: "Plus Jakarta Sans", "Kantumruy Pro", "Khmer OS Siem Reap", system-ui, sans-serif;
+  --font-title: "Plus Jakarta Sans", "Kantumruy Pro", system-ui, sans-serif;
+  --font-brand: "Plus Jakarta Sans", "Kantumruy Pro", system-ui, sans-serif;
+  --font-input: var(--font-body);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* form controls don't inherit the page font by default → Khmer would fall back to a system font */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== Dark mode tweaks (palette lives in theme/default/color.script.js) ========== */
+:root[data-theme="dark"] .md-badge-central,
+:root[data-theme="dark"] .hm-list-icon.central {
+  background: rgba(129, 140, 248, 0.16);
+  color: #a5b4fc;
+}
+
+:root[data-theme="dark"] .md-badge-gold,
+:root[data-theme="dark"] .md-badge-drink {
+  background: rgba(245, 181, 68, 0.14);
+  color: #f5c46b;
+}
+
+:root[data-theme="dark"] .md-badge-danger {
+  background: rgba(248, 113, 113, 0.14);
+  color: #fca5a5;
+}
+
+:root[data-theme="dark"] .md-badge-off {
+  background: var(--color-background-soft);
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .md-code {
+  background: var(--color-background-soft);
+  color: var(--color-text-secondary);
+}
+
+:root[data-theme="dark"] .md-notice-success {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+:root[data-theme="dark"] .hm-steps em {
+  background: rgba(245, 181, 68, 0.14);
+  color: #f5c46b;
+}
+
+:root[data-theme="dark"] .hm-step-icon {
+  background: var(--color-background-soft);
+}

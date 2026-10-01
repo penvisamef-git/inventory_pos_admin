@@ -1,0 +1,423 @@
+/* =========================
+   Master data page — Inventory POS theme
+   (forest green · pill controls · rounded white cards)
+   Loaded after masterdata.style.css, overrides it.
+========================= */
+
+.md-page {
+  --md-primary: var(--color-primary-main, #1f7a4d);
+  --md-primary-hover: var(--color-primary-dark, #14532d);
+  --md-soft: var(--color-primary-soft, #e7f3ec);
+  --md-border: var(--color-border-light);
+  --md-text: var(--color-text-primary, #1b2420);
+  --md-muted: var(--color-text-secondary, #66706b);
+  --md-gold: var(--color-gold-main, #f59e0b);
+  --md-gold-soft: var(--color-gold-soft, #fff6e5);
+}
+
+/* ---------- Cards / table ---------- */
+.md-card {
+  background: var(--color-background-card);
+  border: none;
+  border-radius: 22px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.md-table th {
+  background: var(--color-background-card);
+  color: var(--md-muted);
+  font-weight: 600;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--md-border);
+}
+
+.md-table td {
+  border-bottom-color: var(--color-border-light);
+}
+
+.md-table tbody tr:hover {
+  background: var(--color-background-soft);
+}
+
+/* ---------- Buttons (pill) ---------- */
+.md-btn {
+  border-radius: 999px;
+  height: 40px;
+  padding: 0 18px;
+  font-weight: 600;
+}
+
+.md-btn-primary {
+  background: var(--color-gradient-button, var(--md-primary));
+  box-shadow: 0 6px 14px rgba(20, 83, 45, 0.22);
+}
+
+.md-btn-primary:hover:not(:disabled) {
+  background: var(--color-gradient-button, var(--md-primary-hover));
+  filter: brightness(1.08);
+}
+
+.md-btn-ghost {
+  border: 1.5px solid var(--md-border);
+  background: var(--color-background-card);
+}
+
+.md-icon-btn {
+  border-radius: 50%;
+}
+
+/* ---------- Search + filters (pill) ---------- */
+.md-search {
+  border-radius: 999px;
+  height: 42px;
+  border-color: transparent;
+  background: var(--color-background-card);
+  padding: 0 16px;
+}
+
+/* ---------- Modal ---------- */
+.md-modal {
+  border-radius: 24px;
+  box-shadow: 0 30px 70px rgba(13, 30, 21, 0.25);
+}
+
+.md-modal-header h3 {
+  font-family: var(--font-title);
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.md-field input,
+.md-field select,
+.md-field textarea {
+  border-radius: 12px;
+}
+
+.md-field input:focus,
+.md-field select:focus,
+.md-field textarea:focus {
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 3px var(--md-soft);
+}
+
+/* ---------- Pagination ---------- */
+.md-pager button {
+  border-radius: 50%;
+}
+
+/* ---------- Switch ---------- */
+.md-switch input:checked + .md-switch-track {
+  background: var(--md-primary);
+}
+
+/* ---------- Filters in the toolbar ---------- */
+.md-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.md-filter {
+  height: 42px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 16px;
+  font: inherit;
+  color: var(--md-text);
+  background: var(--color-background-card);
+  min-width: 160px;
+  outline: none;
+}
+
+.md-filter:focus {
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 3px var(--md-soft);
+}
+
+/* ---------- Image cell / picker ---------- */
+.md-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--md-gold-soft);
+  border: 1px solid var(--md-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-gold);
+  vertical-align: middle;
+}
+
+.md-thumb-wide {
+  width: 96px;
+}
+
+.md-image-picker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  border: 1px dashed var(--md-gold);
+  border-radius: 12px;
+  background: var(--md-gold-soft);
+}
+
+.md-image-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--color-background-card);
+  border: 1px solid var(--md-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-gold);
+  flex-shrink: 0;
+}
+
+.md-image-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--md-muted);
+}
+
+.md-image-actions .md-btn {
+  width: fit-content;
+}
+
+.md-file-input {
+  display: none;
+}
+
+/* ---------- Sizes editor ---------- */
+.md-sizes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md-size-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 36px;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ---------- Badges ---------- */
+.md-badge-gold {
+  background: var(--md-gold-soft);
+  color: #d97706;
+}
+
+.md-badge-food {
+  background: var(--color-primary-soft, #e7f3ec);
+  color: var(--color-primary-main, #1f7a4d);
+}
+
+.md-badge-drink {
+  background: #fff7e6;
+  color: #d97706;
+}
+
+/* warehouse type */
+.md-badge-central {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.md-badge-shop {
+  background: var(--color-primary-soft, #e7f3ec);
+  color: var(--color-primary-dark, #14532d);
+}
+
+.md-badge-on {
+  background: var(--color-primary-soft, #e7f3ec);
+  color: var(--color-primary-dark, #14532d);
+}
+
+.md-badge-danger {
+  background: #fdecec;
+  color: var(--md-danger);
+}
+
+.md-price {
+  font-weight: 700;
+  color: var(--color-primary-main, #1f7a4d);
+  white-space: nowrap;
+}
+
+.md-price small {
+  font-weight: 500;
+  color: var(--md-muted);
+  margin-right: 2px;
+}
+
+.md-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--md-muted);
+}
+
+.md-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-background-soft);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.md-icon-btn-gold {
+  color: #d97706;
+}
+
+@media (max-width: 650px) {
+  .md-toolbar-left,
+  .md-search,
+  .md-filter {
+    width: 100%;
+  }
+}
+
+/* ---------- Multi-select chips (e.g. shops of a user) ---------- */
+.md-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--md-border);
+  background: var(--color-background-card);
+  color: var(--md-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.md-chip:hover:not(:disabled) {
+  border-color: var(--md-primary);
+}
+
+.md-chip-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid var(--color-border-strong);
+  color: #ffffff;
+}
+
+.md-chip.on {
+  color: var(--md-primary);
+  border-color: var(--md-primary);
+  background: var(--md-soft);
+}
+
+.md-chip.on .md-chip-box {
+  border-color: var(--md-primary);
+  background: var(--md-primary);
+}
+
+.md-chips-empty {
+  font-size: 13px;
+  color: var(--md-muted);
+}
+
+.md-book-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ---------- Rows editor (attribute values, product units …) ---------- */
+.md-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md-rows-head,
+.md-rows-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+}
+
+.md-rows-head span {
+  font-size: 12px;
+  color: var(--md-muted);
+}
+
+.md-rows-row input {
+  width: 100%;
+  min-width: 0;
+}
+
+.md-rows-color {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.md-rows-color input[type="color"] {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.md-rows-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* value chips in the attribute list */
+.md-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 420px;
+}
+
+.md-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--color-background-soft);
+  color: var(--md-text);
+}
+
+.md-value i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+}
+
+/* indented category names in dropdowns / tree column */
+.md-tree-path {
+  font-size: 12px;
+  color: var(--md-muted);
+}

@@ -1,0 +1,128 @@
+/* Setup screens: setting form + exchange rate banner */
+.st-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.st-card {
+  background: var(--color-background-card, #fff);
+  border: 1px solid var(--color-border-light, var(--color-border-light));
+  border-radius: 20px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.st-card header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primary-main, #1f7a4d);
+}
+
+.st-card header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-text-primary, #1f2330);
+}
+
+.st-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px 18px;
+}
+
+.st-grid .st-full {
+  grid-column: 1 / -1;
+}
+
+.st-grid input,
+.st-grid select,
+.st-grid textarea {
+  width: 100%;
+}
+
+.st-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.st-logo img,
+.st-logo > span {
+  width: 84px;
+  height: 84px;
+  border-radius: 18px;
+  object-fit: contain;
+  background: var(--color-background-main, #f5f6f8);
+  border: 1px dashed var(--color-border-light, var(--color-border-light));
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted, #9aa0ac);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.st-logo-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.st-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.st-loading {
+  padding: 40px;
+  color: var(--color-text-secondary, #6b7080);
+}
+
+/* ---------- Exchange rate banner ---------- */
+.st-rate-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 22px;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-primary-dark, #14532d), var(--color-primary-main, #1f7a4d));
+}
+
+.st-rate-hero > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.st-rate-hero small,
+.st-rate-hero span:not(.st-rate-icon) {
+  opacity: 0.8;
+  font-size: 12px;
+}
+
+.st-rate-hero strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-rate-hero p {
+  margin: 0 0 0 auto;
+  max-width: 420px;
+  font-size: 12.5px;
+  opacity: 0.85;
+}
+
+.st-rate-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.16);
+}

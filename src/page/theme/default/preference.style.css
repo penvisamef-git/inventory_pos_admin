@@ -1,0 +1,91 @@
+/* Language + theme switch (top bar, login) */
+.pref {
+  position: relative;
+}
+
+.pref-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-background-card);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: transform 0.15s, color 0.15s;
+}
+
+.pref-btn:hover {
+  color: var(--color-primary-main);
+  transform: rotate(30deg);
+}
+
+.pref-btn:focus-visible {
+  outline: 2px solid var(--color-primary-main);
+  outline-offset: 2px;
+}
+
+.pref-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 1300;
+  width: 280px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--color-background-card);
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 24px 50px var(--color-shadow-default);
+  color: var(--color-text-primary);
+}
+
+.pref-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.pref-label + .pref-seg {
+  margin-bottom: 16px;
+}
+
+.pref-seg:last-child {
+  margin-bottom: 0;
+}
+
+.pref-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--color-background-soft);
+}
+
+.pref-seg-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.pref-seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pref-seg button.on {
+  background: var(--color-background-card);
+  color: var(--color-primary-main);
+  font-weight: 700;
+  box-shadow: 0 2px 8px var(--color-shadow-light);
+}

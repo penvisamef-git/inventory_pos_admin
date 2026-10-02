@@ -18,6 +18,8 @@ export const STATE = {
   dispatched: { label: L("កំពុងដឹក", "In transit"), badge: "md-badge-gold" },
   received: { label: L("បានទទួល", "Received"), badge: "md-badge-on" },
   cancelled: { label: L("បានបោះបង់", "Cancelled"), badge: "md-badge-danger" },
+  counting: { label: L("កំពុងរាប់", "Counting"), badge: "md-badge-gold" },
+  submitted: { label: L("បានបញ្ជូន", "Submitted"), badge: "md-badge-gold sc-submitted" },
 };
 export const stateBadge = (s) => <span className={`md-badge ${STATE[s]?.badge || ""}`}>{STATE[s]?.label || s}</span>;
 
@@ -28,6 +30,7 @@ export const REASONS = [
   { value: "found", label: L("រកឃើញ / លើស", "Found / extra"), dir: "in" },
   { value: "other", label: L("ផ្សេងៗ (+ ចូល / − ចេញ)", "Other (+ in / − out)"), dir: "both" },
   { value: "transfer_shortage", label: L("ខ្វះពេលផ្ទេរ", "Transfer shortage"), dir: "out", system: true },
+  { value: "stock_count", label: L("រាប់ស្តុក", "Stock count"), dir: "both", system: true },
 ];
 
 export const MOVE_TYPES = {

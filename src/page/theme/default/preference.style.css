@@ -33,7 +33,7 @@
   z-index: 1300;
   width: 280px;
   padding: 16px;
-  border-radius: 20px;
+  border-radius: calc(20px * var(--ui-radius, 1));
   background: var(--color-background-card);
   border: 1px solid var(--color-border-light);
   box-shadow: 0 24px 50px var(--color-shadow-default);
@@ -60,7 +60,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   padding: 4px;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   background: var(--color-background-soft);
 }
 
@@ -75,7 +75,7 @@
   gap: 6px;
   height: 36px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   background: transparent;
   color: var(--color-text-secondary);
   font-size: 13px;

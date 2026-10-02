@@ -1,57 +1,37 @@
-import HomeComponent from "../page/dashboard/home/home.component";
-import UserComponent from "../page/dashboard/user/UserComponent";
-import ActivityLogComponent from "../page/dashboard/log/ActivityLogComponent";
-import AccountPage from "../page/dashboard/account/AccountPage";
-import WarehouseComponent from "../page/dashboard/setup/WarehouseComponent";
-import SettingComponent from "../page/dashboard/setup/SettingComponent";
-import ExchangeRateComponent from "../page/dashboard/setup/ExchangeRateComponent";
-import PaymentMethodComponent from "../page/dashboard/setup/PaymentMethodComponent";
-import UnitComponent from "../page/dashboard/product/UnitComponent";
-import CategoryComponent from "../page/dashboard/product/CategoryComponent";
-import AttributeComponent from "../page/dashboard/product/AttributeComponent";
-import BrandComponent from "../page/dashboard/product/BrandComponent";
-import ProductComponent from "../page/dashboard/product/ProductComponent";
-import PriceComponent from "../page/dashboard/product/PriceComponent";
-import StockBalanceComponent from "../page/dashboard/stock/StockBalanceComponent";
-import MovementComponent from "../page/dashboard/stock/MovementComponent";
-import ExpiryComponent from "../page/dashboard/stock/ExpiryComponent";
-import TransferComponent from "../page/dashboard/stock/TransferComponent";
-import ReceiveComponent from "../page/dashboard/stock/ReceiveComponent";
-import AdjustmentComponent from "../page/dashboard/stock/AdjustmentComponent";
-import OpeningComponent from "../page/dashboard/stock/OpeningComponent";
-import SupplierComponent from "../page/dashboard/purchase/SupplierComponent";
-import TelegramComponent from "../page/dashboard/telegram/TelegramComponent";
+import lazyPage from "./lazyPage";
 import { ACCESS } from "../page/util/permission";
-import {
-  LayoutDashboard,
-  Users,
-  History,
-  User,
-  Settings2,
-  Warehouse,
-  SlidersHorizontal,
-  ArrowRightLeft,
-  Wallet,
-  Package,
-  Ruler,
-  FolderTree,
-  Palette,
-  Shirt,
-  BadgeCheck,
-  Tag,
-  Boxes,
-  PackageSearch,
-  CalendarClock,
-  Truck,
-  PackagePlus,
-  ClipboardPen,
-  ArchiveRestore,
-  ListOrdered,
-  Factory,
-  Send,
-} from "lucide-react";
+import { LayoutDashboard, Users, History, User, Settings2, Warehouse, SlidersHorizontal, ArrowRightLeft, Wallet, Package, Ruler, FolderTree, Palette, Shirt, BadgeCheck, Tag, Boxes, PackageSearch, CalendarClock, Truck, PackagePlus, ClipboardPen, ArchiveRestore, ListOrdered, Factory, Send, ClipboardCheck, QrCode, StickyNote } from "lucide-react";
 
 import { L } from "../i18n";
+
+// Each screen is its own JS file, downloaded the first time it is opened (smaller first load)
+const HomeComponent = lazyPage(() => import("../page/dashboard/home/home.component"));
+const UserComponent = lazyPage(() => import("../page/dashboard/user/UserComponent"));
+const ActivityLogComponent = lazyPage(() => import("../page/dashboard/log/ActivityLogComponent"));
+const AccountPage = lazyPage(() => import("../page/dashboard/account/AccountPage"));
+const WarehouseComponent = lazyPage(() => import("../page/dashboard/setup/WarehouseComponent"));
+const SettingComponent = lazyPage(() => import("../page/dashboard/setup/SettingComponent"));
+const ExchangeRateComponent = lazyPage(() => import("../page/dashboard/setup/ExchangeRateComponent"));
+const PaymentMethodComponent = lazyPage(() => import("../page/dashboard/setup/PaymentMethodComponent"));
+const UnitComponent = lazyPage(() => import("../page/dashboard/product/UnitComponent"));
+const CategoryComponent = lazyPage(() => import("../page/dashboard/product/CategoryComponent"));
+const AttributeComponent = lazyPage(() => import("../page/dashboard/product/AttributeComponent"));
+const BrandComponent = lazyPage(() => import("../page/dashboard/product/BrandComponent"));
+const ProductComponent = lazyPage(() => import("../page/dashboard/product/ProductComponent"));
+const PriceComponent = lazyPage(() => import("../page/dashboard/product/PriceComponent"));
+const StockBalanceComponent = lazyPage(() => import("../page/dashboard/stock/StockBalanceComponent"));
+const MovementComponent = lazyPage(() => import("../page/dashboard/stock/MovementComponent"));
+const ExpiryComponent = lazyPage(() => import("../page/dashboard/stock/ExpiryComponent"));
+const TransferComponent = lazyPage(() => import("../page/dashboard/stock/TransferComponent"));
+const ReceiveComponent = lazyPage(() => import("../page/dashboard/stock/ReceiveComponent"));
+const AdjustmentComponent = lazyPage(() => import("../page/dashboard/stock/AdjustmentComponent"));
+const StockCountComponent = lazyPage(() => import("../page/dashboard/stock/StockCountComponent"));
+const OpeningComponent = lazyPage(() => import("../page/dashboard/stock/OpeningComponent"));
+const SupplierComponent = lazyPage(() => import("../page/dashboard/purchase/SupplierComponent"));
+const QrCodeComponent = lazyPage(() => import("../page/dashboard/qr/QrCodeComponent"));
+const NoteComponent = lazyPage(() => import("../page/dashboard/note/NoteComponent"));
+const TelegramComponent = lazyPage(() => import("../page/dashboard/telegram/TelegramComponent"));
+
 // Sidebar menu + routes. Each module adds its entry here (access → page/util/permission.js).
 // section: sidebar heading — menu | warehouse | connect | system (SECTIONS in page/theme/default/theme.component.jsx)
 // Order (Phase 1): Setup (warehouse, setting, exchange rate, payment method) → Product (unit, category, attribute, product, price)
@@ -134,22 +114,6 @@ class RouteScript {
               breadcrumb: [
                 { name: L("ការរៀបចំ", "Setup"), url: null },
                 { name: L("វិធីបង់ប្រាក់", "Payment methods"), url: null },
-              ],
-              child: [],
-            },
-            {
-              is_show_sidebar: true,
-              is_can_access_route: true,
-              name: L("ការកំណត់ទូទៅ", "General settings"),
-              icon: <SlidersHorizontal size={18} />,
-              component: <SettingComponent />,
-              url: "setting",
-              subtitle: L("ព័ត៌មានក្រុមហ៊ុន ពន្ធ វិក្កយបត្រ និងការជូនដំណឹងស្តុក", "Company, tax, receipt and stock alerts"),
-              access: ACCESS.MASTER,
-              type: "index",
-              breadcrumb: [
-                { name: L("ការរៀបចំ", "Setup"), url: null },
-                { name: L("ការកំណត់ទូទៅ", "General settings"), url: null },
               ],
               child: [],
             },
@@ -353,6 +317,22 @@ class RouteScript {
             {
               is_show_sidebar: true,
               is_can_access_route: true,
+              name: L("រាប់ស្តុក", "Stock count"),
+              icon: <ClipboardCheck size={18} />,
+              component: <StockCountComponent />,
+              url: "count",
+              subtitle: L("រាប់ស្តុកជាក់ស្តែង (Blind count) ប្រៀបធៀប និងកែតម្រូវ", "Physical stock count (blind), differences and adjustment"),
+              access: ACCESS.MASTER,
+              type: "index",
+              breadcrumb: [
+                { name: L("ស្តុក", "Stock"), url: null },
+                { name: L("រាប់ស្តុក", "Stock count"), url: null },
+              ],
+              child: [],
+            },
+            {
+              is_show_sidebar: true,
+              is_can_access_route: true,
               name: L("ជិតផុតកំណត់", "Near expiry"),
               icon: <CalendarClock size={18} />,
               component: <ExpiryComponent />,
@@ -451,6 +431,50 @@ class RouteScript {
       },
       {
         is_show_sidebar: true,
+        section: "connect",
+        is_can_access_route: true,
+        name: L("កូដ QR", "QR Code"),
+        icon: <QrCode />,
+        component: <QrCodeComponent />,
+        url: "qr",
+        subtitle: L("តំណសាធារណៈ / QR ឲ្យអតិថិជនមើលទំនិញ តម្លៃ និងស្តុករបស់ហាង", "Public links / QR codes for customers to see a shop's items, prices and stock"),
+        access: ACCESS.PRODUCT,
+        type: "index",
+        breadcrumb: [{ name: L("កូដ QR", "QR Code"), url: null }],
+        child: [],
+      },
+      {
+        // ---------------- Other ----------------
+        is_show_sidebar: true,
+        section: "other",
+        is_can_access_route: true,
+        name: L("កំណត់ចំណាំ", "Notes"),
+        icon: <StickyNote />,
+        component: <NoteComponent />,
+        url: "note",
+        subtitle: L("កំណត់ចំណាំផ្ទាល់ខ្លួន ដូចក្នុងទូរស័ព្ទ (មានតែអ្នកមើលឃើញ)", "Your own notes, like on your phone (only you can see them)"),
+        access: ACCESS.ALL, // everyone: own notes · super admin: everyone's (API)
+        type: "index",
+        breadcrumb: [{ name: L("កំណត់ចំណាំ", "Notes"), url: null }],
+        child: [],
+      },
+      {
+        // ---------------- System ----------------
+        is_show_sidebar: true,
+        section: "system",
+        is_can_access_route: true,
+        name: L("ការកំណត់ទូទៅ", "General settings"),
+        icon: <SlidersHorizontal />,
+        component: <SettingComponent />,
+        url: "setting",
+        subtitle: L("រចនាប័ទ្មប្រព័ន្ធ ព័ត៌មានក្រុមហ៊ុន ពន្ធ វិក្កយបត្រ និងការជូនដំណឹងស្តុក", "System theme, company, tax, receipt and stock alerts"),
+        access: ACCESS.MASTER,
+        type: "index",
+        breadcrumb: [{ name: L("ការកំណត់ទូទៅ", "General settings"), url: null }],
+        child: [],
+      },
+      {
+        is_show_sidebar: true,
         section: "system",
         is_can_access_route: true,
         name: L("អ្នកប្រើប្រាស់", "Users"),
@@ -471,8 +495,8 @@ class RouteScript {
         icon: <History />,
         component: <ActivityLogComponent />,
         url: "activity-log",
-        subtitle: L("អ្នកណាបានធ្វើអ្វី នៅពេលណា", "Who did what, and when"),
-        access: ACCESS.ADMIN,
+        subtitle: L("អ្នកណាបានធ្វើអ្វី នៅពេលណា (តួនាទីផ្សេង៖ តែរបស់ខ្លួន)", "Who did what, and when (other roles: only their own)"),
+        access: ACCESS.ALL, // admin / super admin: everything · other roles: only their own rows (API)
         type: "index",
         breadcrumb: [{ name: L("កំណត់ត្រាសកម្មភាព", "Activity log"), url: null }],
         child: [],

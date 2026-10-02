@@ -1,13 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, ChevronDown, RefreshCw, ScanBarcode } from "lucide-react";
+import React, { useRef, useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, Search, Pencil, Trash2, X, ChevronLeft, ChevronRight, ChevronDown, RefreshCw, ScanBarcode, Upload } from "lucide-react";
 import { attributeService, brandService, categoryService, productService, unitService } from "../../../api/api.service";
 import { imageCell, statusCell } from "../master_data/MasterDataPage";
 import ProductEditor from "./ProductEditor";
+import ProductImport from "./ProductImport";
 import { canEditProduct, flattenTree, nameKh, nameOther } from "./productOptions";
 import { L } from "../../../i18n";
 import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "./product.style.css";
+import useUrlQuery from "../../util/useUrlQuery";
+import Select from "../../util/Select"; // searchable <select>
 
 const PAGE_SIZES = [10, 20, 50];
 const valueName = (v) => L(v?.name_kh || v?.name_en, v?.name_en || v?.name_kh);
@@ -57,22 +60,32 @@ function ProductComponent() {
   const [limit, setLimit] = useState(PAGE_SIZES[0]);
   const [keyword, setKeyword] = useState("");
   const [search, setSearch] = useState("");
+  useUrlQuery(setKeyword); // ?q= from the global search
   const [filters, setFilters] = useState({ category_id: "", brand_id: "", track_batch: "" });
   const [loading, setLoading] = useState(false);
   const [listError, setListError] = useState("");
   const [notice, setNotice] = useState(null);
   const [open, setOpen] = useState({}); // expanded rows → variants
   const [editor, setEditor] = useState(null); // { id } | { id: null }
+  const [importing, setImporting] = useState(false); // Excel import dialog
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const filterKey = JSON.stringify(filters);
+  // cached pages (api.client.js): last copy at once, quiet refresh, next page pre-loaded
+  const loadSeq = useRef(0);
   const loadData = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const apply = (res) => {
+      if (seq !== loadSeq.current) return;
+      setRows(res.data || []);
+      setPagination(res.pagination || { total: 0, totalPages: 1 });
+    };
     setLoading(true);
     setListError("");
     try {
       const f = JSON.parse(filterKey);
-      const res = await productService.list({
+      const params = {
         page,
         limit,
         sort: "sort_order",
@@ -81,9 +94,10 @@ function ProductComponent() {
         category_id: f.category_id || undefined,
         brand_id: f.brand_id || undefined,
         track_batch: f.track_batch || undefined,
-      });
-      setRows(res.data || []);
-      setPagination(res.pagination || { total: 0, totalPages: 1 });
+      };
+      const res = await productService.list(params, { onFresh: apply });
+      apply(res);
+      if (page < (res.pagination?.totalPages || 1)) productService.list({ ...params, page: page + 1 }, { prefetch: true });
     } catch (err) {
       setListError(err.message);
       setRows([]);
@@ -197,28 +211,34 @@ function ProductComponent() {
               <ScanBarcode size={16} className="pr-scan" />
             )}
           </div>
-          <select className="md-filter" value={filters.category_id} onChange={(e) => setFilter("category_id", e.target.value)}>
+          <Select className="md-filter" value={filters.category_id} onChange={(e) => setFilter("category_id", e.target.value)}>
             <option value="">{L("-- ប្រភេទទាំងអស់ --", "-- All categories --")}</option>
             {categoryOptions.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
-          </select>
-          <select className="md-filter" value={filters.brand_id} onChange={(e) => setFilter("brand_id", e.target.value)}>
+          </Select>
+          <Select className="md-filter" value={filters.brand_id} onChange={(e) => setFilter("brand_id", e.target.value)}>
             <option value="">{L("-- ម៉ាកទាំងអស់ --", "-- All brands --")}</option>
             {lookups.brands.map((b) => (
               <option key={b._id} value={b._id}>{nameKh(b)}</option>
             ))}
-          </select>
-          <select className="md-filter" value={filters.track_batch} onChange={(e) => setFilter("track_batch", e.target.value)}>
+          </Select>
+          <Select className="md-filter" value={filters.track_batch} onChange={(e) => setFilter("track_batch", e.target.value)}>
             <option value="">{L("-- Batch: ទាំងអស់ --", "-- Batch: all --")}</option>
             <option value="true">{L("មាន Batch / ផុតកំណត់", "With batch / expiry")}</option>
             <option value="false">{L("គ្មាន Batch", "No batch")}</option>
-          </select>
+          </Select>
         </div>
         <div className="md-toolbar-actions">
           <button type="button" className="md-btn md-btn-ghost" onClick={loadData} disabled={loading} title={L("ផ្ទុកឡើងវិញ", "Reload")}>
             <RefreshCw size={16} className={loading ? "md-spin" : ""} />
           </button>
+          {canEdit && (
+            <button type="button" className="md-btn md-btn-ghost" onClick={() => setImporting(true)} title={L("នាំចូល / នាំចេញ Excel", "Excel import / export")}>
+              <Upload size={16} />
+              Excel
+            </button>
+          )}
           {canEdit && (
             <button type="button" className="md-btn md-btn-primary" onClick={() => setEditor({ id: null })}>
               <Plus size={16} />
@@ -334,11 +354,11 @@ function ProductComponent() {
         <div className="md-pagination">
           <div className="md-page-size">
             {L("បង្ហាញ", "Show")}
-            <select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}>
+            <Select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}>
               {PAGE_SIZES.map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
-            </select>
+            </Select>
             {L("/ សរុប", "/ total")} {pagination.total || 0}
           </div>
           <div className="md-pager">
@@ -360,6 +380,17 @@ function ProductComponent() {
           onClose={() => setEditor(null)}
           onSaved={(message) => {
             setEditor(null);
+            setOpen({});
+            setNotice({ type: "success", text: message });
+            loadData();
+          }}
+        />
+      )}
+
+      {importing && (
+        <ProductImport
+          onClose={() => setImporting(false)}
+          onDone={(message) => {
             setOpen({});
             setNotice({ type: "success", text: message });
             loadData();

@@ -16,6 +16,8 @@ import "./masterdata.style.css";
 import "./masterdata.theme.css";
 
 import { L } from "../../../i18n";
+import useUrlQuery from "../../util/useUrlQuery";
+import Select from "../../util/Select"; // searchable <select>
 const PAGE_SIZES = [10, 20, 50];
 
 // Date → "YYYY-MM-DDTHH:mm" in the browser's time zone (for <input type="datetime-local">)
@@ -288,6 +290,7 @@ function MasterDataPage({
   const [limit, setLimit] = useState(PAGE_SIZES[0]);
   const [keyword, setKeyword] = useState("");
   const [search, setSearch] = useState("");
+  useUrlQuery(setKeyword); // ?q= from the global search
   const [filterValues, setFilterValues] = useState({});
   const [loading, setLoading] = useState(false);
   const [listError, setListError] = useState("");
@@ -304,20 +307,30 @@ function MasterDataPage({
   const listParamsKey = JSON.stringify(listParams || {});
   const filterKey = JSON.stringify(filterValues);
 
+  // Pages are cached (api.client.js): a page seen in the last 5 min shows at once, then refreshes quietly;
+  // the next page is loaded in the background so "next" is instant.
+  const loadSeq = useRef(0);
   const loadData = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const apply = (res) => {
+      if (seq !== loadSeq.current) return; // an older answer — the user already moved on
+      setRows(res.data || []);
+      setPagination(res.pagination || { total: 0, totalPages: 1 });
+    };
+    const params = {
+      ...JSON.parse(listParamsKey),
+      ...JSON.parse(filterKey),
+      page,
+      limit,
+      q: search,
+      q_key: search ? searchKeys : undefined,
+    };
     setLoading(true);
     setListError("");
     try {
-      const res = await service.list({
-        ...JSON.parse(listParamsKey),
-        ...JSON.parse(filterKey),
-        page,
-        limit,
-        q: search,
-        q_key: search ? searchKeys : undefined,
-      });
-      setRows(res.data || []);
-      setPagination(res.pagination || { total: 0, totalPages: 1 });
+      const res = await service.list(params, { onFresh: apply });
+      apply(res);
+      if (page < (res.pagination?.totalPages || 1)) service.list({ ...params, page: page + 1 }, { prefetch: true });
     } catch (err) {
       setListError(err.message);
       setRows([]);
@@ -527,14 +540,14 @@ function MasterDataPage({
       const all = typeof f.options === "function" ? f.options(form) : f.options || [];
       const options = all.filter((opt) => !editing || opt.value !== editing._id);
       return (
-        <select {...common}>
+        <Select {...common}>
           {!f.noEmpty && <option value="">{f.placeholder || L("-- ជ្រើសរើស --", "-- Choose --")}</option>}
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
           ))}
-        </select>
+        </Select>
       );
     }
 
@@ -634,7 +647,7 @@ function MasterDataPage({
           </div>
 
           {filters.map((flt) => (
-            <select
+            <Select
               key={flt.key}
               className="md-filter"
               value={filterValues[flt.key] || ""}
@@ -650,7 +663,7 @@ function MasterDataPage({
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </Select>
           ))}
         </div>
 
@@ -739,7 +752,7 @@ function MasterDataPage({
         <div className="md-pagination">
           <div className="md-page-size">
             {L("បង្ហាញ", "Show")}
-            <select
+            <Select
               value={limit}
               onChange={(e) => {
                 setLimit(Number(e.target.value));
@@ -751,7 +764,7 @@ function MasterDataPage({
                   {n}
                 </option>
               ))}
-            </select>
+            </Select>
             {L("/ សរុប", "/ total")} {pagination.total || 0}
           </div>
 

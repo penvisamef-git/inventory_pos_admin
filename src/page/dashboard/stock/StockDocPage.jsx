@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Search, X, Eye, Pencil, CheckCircle2, Ban, RefreshCw, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import React, { useRef, useCallback, useEffect, useMemo, useState } from "react";
+import { Ban, CheckCircle2, ChevronLeft, ChevronRight, Eye, Pencil, Plus, Printer, RefreshCw, Search, Trash2, X } from "lucide-react";
 import { stockService, variantService, warehouseService } from "../../../api/api.service";
 import { dateTimeText } from "../master_data/MasterDataPage";
 import VariantPicker from "./VariantPicker";
@@ -10,6 +10,8 @@ import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "../product/product.style.css";
 import "./stock.style.css";
+import useUrlQuery from "../../util/useUrlQuery";
+import Select from "../../util/Select"; // searchable <select>
 
 const PAGE_SIZES = [10, 20, 50];
 let lineSeq = 0;
@@ -62,6 +64,7 @@ export const lineFromVariant = (v, extra = {}) => {
  *   actions(doc, api)    extra row buttons; api = { reload, notify, view }
  *   ViewExtra({ doc })   extra block in the detail view
  *   toolbarExtra(api)    extra toolbar buttons (Excel import …)
+ *   printType            "transfer" | "receive" | … → Print (A4) button in the detail view (/print/:type/:id)
  */
 function StockDocPage({ config }) {
   const shopUser = isShopUser();
@@ -86,13 +89,22 @@ function StockDocPage({ config }) {
   const [notice, setNotice] = useState(null);
   const filterKey = JSON.stringify(filters);
 
+  // cached pages (api.client.js): show the last copy at once, refresh quietly, pre-load the next page
+  const loadSeq = useRef(0);
   const loadData = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const apply = (res) => {
+      if (seq !== loadSeq.current) return;
+      setRows(res.data || []);
+      setPagination(res.pagination || { total: 0, totalPages: 1 });
+    };
+    const params = { page, limit, q: search || undefined, sort: "created_date", order: "desc", ...JSON.parse(filterKey), ...(portal ? { warehouse_id: portal._id } : {}) };
     setLoading(true);
     setListError("");
     try {
-      const res = await config.service.list({ page, limit, q: search || undefined, sort: "created_date", order: "desc", ...JSON.parse(filterKey), ...(portal ? { warehouse_id: portal._id } : {}) });
-      setRows(res.data || []);
-      setPagination(res.pagination || { total: 0, totalPages: 1 });
+      const res = await config.service.list(params, { onFresh: apply });
+      apply(res);
+      if (page < (res.pagination?.totalPages || 1)) config.service.list({ ...params, page: page + 1 }, { prefetch: true });
     } catch (err) {
       setListError(err.message);
       setRows([]);
@@ -238,6 +250,7 @@ function StockDocPage({ config }) {
       notify("error", err.message);
     }
   };
+  useUrlQuery(setKeyword, (id) => openView({ _id: id })); // ?q= / ?open=<id> from the global search
   const [confirm, setConfirm] = useState(null); // { title, text, run }
   const runConfirm = async () => {
     setSaving(true);
@@ -285,7 +298,7 @@ function StockDocPage({ config }) {
             )}
           </div>
           {(config.filters || []).filter((flt) => !(portal && flt.key === "warehouse_id")).map((flt) => (
-            <select
+            <Select
               key={flt.key}
               className="md-filter"
               value={filters[flt.key] || ""}
@@ -298,7 +311,7 @@ function StockDocPage({ config }) {
               {(typeof flt.options === "function" ? flt.options(ctx) : flt.options).map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-            </select>
+            </Select>
           ))}
         </div>
         <div className="md-toolbar-actions">
@@ -372,11 +385,11 @@ function StockDocPage({ config }) {
         <div className="md-pagination">
           <div className="md-page-size">
             {L("បង្ហាញ", "Show")}
-            <select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}>
+            <Select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}>
               {PAGE_SIZES.map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
-            </select>
+            </Select>
             {L("/ សរុប", "/ total")} {pagination.total || 0}
           </div>
           <div className="md-pager">
@@ -454,13 +467,13 @@ function StockDocPage({ config }) {
                               </td>
                             )}
                             <td>
-                              <select className="pe-input sd-unit" value={l.unit_id} onChange={(e) => setLine(l.key, { unit_id: e.target.value })} disabled={saving}>
+                              <Select className="pe-input sd-unit" value={l.unit_id} onChange={(e) => setLine(l.key, { unit_id: e.target.value })} disabled={saving}>
                                 {l.units.map((x) => (
                                   <option key={x.unit_id} value={x.unit_id}>
                                     {unitLabel(x.code, x.name_kh, x.name_en)}{x.factor !== 1 ? ` (${x.factor})` : ""}
                                   </option>
                                 ))}
-                              </select>
+                              </Select>
                             </td>
                             <td>
                               <input className="pe-input pe-num" type="number" step="any" value={l.qty} onChange={(e) => setLine(l.key, { qty: e.target.value })} disabled={saving} />
@@ -476,14 +489,14 @@ function StockDocPage({ config }) {
                             {anyBatchOut && (
                               <td>
                                 {bOut ? (
-                                  <select className="pe-input sd-batch-sel" value={l.batch_id} onChange={(e) => setLine(l.key, { batch_id: e.target.value })} disabled={saving}>
+                                  <Select className="pe-input sd-batch-sel" value={l.batch_id} onChange={(e) => setLine(l.key, { batch_id: e.target.value })} disabled={saving}>
                                     <option value="">{L("ស្វ័យប្រវត្តិ (FEFO)", "Auto (FEFO)")}</option>
                                     {(a?.batches || []).map((b) => (
                                       <option key={b.batch_id} value={b.batch_id}>
                                         {b.batch_no} · {dateOnly(b.expiry_date)} · {qtyText(b.qty)}{b.expired ? ` · ${L("ផុតកំណត់", "expired")}` : ""}
                                       </option>
                                     ))}
-                                  </select>
+                                  </Select>
                                 ) : (
                                   <span className="md-sub">—</span>
                                 )}
@@ -593,6 +606,12 @@ function StockDocPage({ config }) {
               </section>
             </div>
             <div className="md-modal-footer">
+              {config.printType && (
+                <button type="button" className="md-btn md-btn-ghost" onClick={() => window.open(`/print/${config.printType}/${view._id}`, "_blank")}>
+                  <Printer size={16} />
+                  {L("បោះពុម្ព", "Print")}
+                </button>
+              )}
               {config.viewActions && config.viewActions(view, api)}
               <button type="button" className="md-btn md-btn-ghost" onClick={() => setView(null)}>{L("បិទ", "Close")}</button>
             </div>

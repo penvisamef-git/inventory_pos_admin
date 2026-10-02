@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Building2, ImagePlus, Percent, Receipt, Save, Boxes, X } from "lucide-react";
+import { Building2, ImagePlus, Percent, Receipt, Save, Boxes, X, Palette, Check } from "lucide-react";
+import { SKIN_LIST } from "../../theme/themes";
+import { setSkin } from "../../theme/default/color.script";
 import { settingService, uploadService } from "../../../api/api.service";
 import { TAX_MODE_OPTIONS, canEditSetup } from "./setupOptions";
 import "../master_data/masterdata.style.css";
 import "./setup.style.css";
 
 import { L } from "../../../i18n";
+import Select from "../../util/Select"; // searchable <select>
 const EMPTY = {
   company_name_kh: "",
   company_name_en: "",
@@ -22,6 +25,7 @@ const EMPTY = {
   receipt_footer: "",
   low_stock_default: 5,
   expiry_alert_days: 30,
+  ui_theme: "forest",
 };
 
 function Field({ label, hint, children, full }) {
@@ -30,6 +34,30 @@ function Field({ label, hint, children, full }) {
       <label>{label}</label>
       {children}
       {hint && <span className="md-sub">{hint}</span>}
+    </div>
+  );
+}
+
+// Mini picture of a theme (sidebar + card + button) in its own colors
+function ThemePreview({ skin }) {
+  const c = skin.light;
+  const r = (px) => `${Math.round(px * skin.radius)}px`;
+  const navySide = skin.key === "navy";
+  return (
+    <div className="st-theme-shot" style={{ background: c.background.app, borderRadius: r(12), fontFamily: `"${skin.fontName}", system-ui` }}>
+      <div className="st-theme-side" style={{ background: navySide ? "#13213a" : c.background.sidebar, borderRadius: r(9) }}>
+        <i style={{ background: c.gradient.button, borderRadius: r(6) }} />
+        <b style={{ background: navySide ? c.gold.main : c.primary.main }} />
+        <b style={{ background: navySide ? "#4a5a75" : c.border.strong }} />
+        <b style={{ background: navySide ? "#4a5a75" : c.border.strong }} />
+      </div>
+      <div className="st-theme-main">
+        <div className="st-theme-hero" style={{ background: c.gradient.primary, borderRadius: r(10) }}>Aa</div>
+        <div className="st-theme-card" style={{ background: c.background.card, borderRadius: r(10), color: c.text.primary }}>
+          <span style={{ background: c.primary.soft, color: c.primary.dark, borderRadius: skin.key === "ocean" ? "4px" : skin.key === "navy" ? "5px" : "999px" }}>{skin.name_en}</span>
+          <em style={{ background: c.gradient.button, borderRadius: skin.key === "ocean" ? "6px" : skin.key === "navy" ? "7px" : "999px" }} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -59,6 +87,27 @@ function SettingComponent() {
   }, [notice]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // theme: saved at once (whole system), applied right away
+  const [themeSaving, setThemeSaving] = useState("");
+  const pickTheme = async (key) => {
+    if (!canEdit || key === form.ui_theme) return;
+    const before = form.ui_theme;
+    setThemeSaving(key);
+    setError("");
+    setSkin(key);
+    setForm((f) => ({ ...f, ui_theme: key }));
+    try {
+      await settingService.update({ ui_theme: key });
+      setNotice(L("រចនាប័ទ្មត្រូវបានប្តូរសម្រាប់អ្នកប្រើទាំងអស់!", "Theme changed for everyone!"));
+    } catch (err) {
+      setSkin(before);
+      setForm((f) => ({ ...f, ui_theme: before }));
+      setError(err.message);
+    } finally {
+      setThemeSaving("");
+    }
+  };
 
   const uploadLogo = async (file) => {
     if (!file) return;
@@ -104,6 +153,42 @@ function SettingComponent() {
     <form className="md-page st-page" onSubmit={save}>
       {notice && <div className="md-notice md-notice-success">{notice}</div>}
       {!canEdit && <div className="md-hint">{L("អ្នកអាចមើលបានតែប៉ុណ្ណោះ (កែប្រែបានតែអ្នកគ្រប់គ្រងប្រព័ន្ធ)", "View only (only the admin can edit)")}</div>}
+
+      {/* ---------- Theme ---------- */}
+      <section className="st-card">
+        <header>
+          <Palette size={18} />
+          <h3>{L("រចនាប័ទ្មប្រព័ន្ធ", "System theme")}</h3>
+        </header>
+        <p className="md-hint st-theme-hint">
+          {L(
+            "ពណ៌ រាង និងអក្សរ សម្រាប់អ្នកប្រើទាំងអស់ (Admin web និង Shop portal)។ ភ្លឺ / ងងឹត នៅតែជាជម្រើសរបស់អ្នកប្រើម្នាក់ៗ។",
+            "Colors, shapes and fonts for everyone (admin web and shop portal). Light / dark stays each user's own choice.",
+          )}
+        </p>
+        <div className="st-themes">
+          {SKIN_LIST.map((skin) => {
+            const on = form.ui_theme === skin.key;
+            return (
+              <button
+                key={skin.key}
+                type="button"
+                className={`st-theme ${on ? "on" : ""}`}
+                onClick={() => pickTheme(skin.key)}
+                disabled={!canEdit || !!themeSaving}
+                aria-pressed={on}
+              >
+                <ThemePreview skin={skin} />
+                <span className="st-theme-name">
+                  {on && <Check size={15} />}
+                  {L(skin.name_kh, skin.name_en)}
+                </span>
+                <span className="md-sub">{L(skin.desc_kh, skin.desc_en)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* ---------- Company ---------- */}
       <section className="st-card">
@@ -168,13 +253,13 @@ function SettingComponent() {
         </header>
         <div className="st-grid">
           <Field label={L("របៀបពន្ធ (VAT)", "Tax mode (VAT)")} hint={L("ការផ្លាស់ប្តូរមានប្រសិទ្ធភាពលើវិក្កយបត្រថ្មីប៉ុណ្ណោះ", "Changes apply to new invoices only")}>
-            <select value={form.tax_mode} onChange={set("tax_mode")} disabled={disabled}>
+            <Select value={form.tax_mode} onChange={set("tax_mode")} disabled={disabled}>
               {TAX_MODE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </Field>
           <Field label={L("អត្រាពន្ធ (%)", "Tax rate (%)")}>
             <input type="number" min="0" max="100" step="0.01" value={form.tax_rate} onChange={set("tax_rate")} disabled={disabled || form.tax_mode === "none"} />

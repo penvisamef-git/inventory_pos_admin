@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, Menu, X, ChevronDown, ChevronRight, User, Baby, Home, Store } from "lucide-react";
 import "./theme.style.css";
 import "./color.script";
 import PreferenceMenu from "./PreferenceMenu";
+import GlobalSearch from "./GlobalSearch";
 import Auth from "../../util/auth.js";
 import { authService } from "../../../api/api.service";
 import { canUsePortal, roleOf } from "../../util/permission";
@@ -11,12 +12,14 @@ import { ROLE, roleLabel } from "../../dashboard/user/userRoles";
 import { APP_NAME, APP_NAME_KH, APP_VERSION_TEXT } from "../../../appInfo";
 
 import { L, LANG } from "../../../i18n";
+import { preloadPages } from "../../../routes/lazyPage";
 // true when the current URL is this route (also /create, /edit/:id, /view/:id)
 // Sidebar headings (route.script.js → section). "system" also holds My account + Log out.
 const SECTIONS = [
   { key: "menu", label: L("ម៉ឺនុយ", "MENU") },
   { key: "warehouse", label: L("ឃ្លាំងទំនិញ", "WAREHOUSE") },
   { key: "connect", label: L("ការតភ្ជាប់", "CONNECT") },
+  { key: "other", label: L("ផ្សេងៗ", "OTHER") },
   { key: "system", label: L("ប្រព័ន្ធ", "SYSTEM") },
 ];
 
@@ -61,6 +64,11 @@ function Theme({ component, currentRoute, routeList }) {
   useEffect(() => {
     document.title = `${currentRoute?.name || "Dashboard"} · ${APP_NAME}`;
   }, [currentRoute]);
+
+  // after the first screen shows, fetch the other screens' JS in the background
+  useEffect(() => {
+    preloadPages();
+  }, []);
 
   // Esc closes the logout dialog
   useEffect(() => {
@@ -196,7 +204,7 @@ function Theme({ component, currentRoute, routeList }) {
           );
         })}
 
-        <p className={`nav-label nav-label-${LANG}`}>{SECTIONS[3].label}</p>
+        <p className={`nav-label nav-label-${LANG}`}>{SECTIONS.find((sec) => sec.key === "system").label}</p>
         <nav className="nav">
           {menuOf("system")}
           <Link to="/account" className={`nav-item ${isActive("/account")}`} onClick={closeSidebar}>
@@ -242,6 +250,7 @@ function Theme({ component, currentRoute, routeList }) {
           </nav>
 
           <div className="topbar-right">
+            <GlobalSearch routeList={routeList} />
             {canUsePortal(login) && (
               <Link to="/shop" className="topbar-portal" title={L("ប្តូរទៅផ្ទាំងគ្រប់គ្រងហាង / ឃ្លាំង", "Switch to a shop / warehouse dashboard")}>
                 <Store size={16} />
@@ -265,7 +274,9 @@ function Theme({ component, currentRoute, routeList }) {
             {currentRoute?.subtitle && <p>{currentRoute.subtitle}</p>}
           </div>
 
-          <div className="page-body">{component}</div>
+          <div className="page-body">
+            <Suspense fallback={<div className="page-loading" />}>{component}</Suspense>
+          </div>
 
           <footer className="footer">
             © {new Date().getFullYear()} {APP_NAME} · {APP_NAME_KH} · {APP_VERSION_TEXT}

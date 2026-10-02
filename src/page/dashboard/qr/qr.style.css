@@ -1,0 +1,176 @@
+/* =========================
+   QR code / public catalog links (QrCodeComponent.jsx)
+========================= */
+.qr-intro {
+  margin: 0;
+  color: var(--md-muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.qr-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 40px 20px;
+  color: var(--md-muted);
+  text-align: center;
+}
+
+.qr-empty b {
+  color: var(--md-text);
+  font-size: 15px;
+}
+
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr));
+  gap: 14px;
+}
+
+.qr-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  transition: opacity 0.2s;
+}
+
+.qr-card.is-off .qr-thumb,
+.qr-card.is-off .qr-url {
+  opacity: 0.35;
+}
+
+.qr-thumb {
+  flex: none;
+  align-self: flex-start;
+  padding: 8px;
+  border: 1px solid var(--md-border);
+  border-radius: calc(14px * var(--ui-radius, 1));
+  background: #fff;
+  cursor: zoom-in;
+  line-height: 0;
+}
+
+.qr-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qr-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.qr-name b {
+  overflow: hidden;
+  color: var(--md-text);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qr-store {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--md-text);
+  font-size: 13.5px;
+}
+
+.qr-url {
+  overflow: hidden;
+  color: var(--md-primary);
+  font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qr-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.qr-actions .md-btn {
+  padding: 6px 11px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.qr-actions .is-disabled {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.qr-big {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.qr-big-img {
+  padding: 12px;
+  border: 1px solid var(--md-border);
+  border-radius: calc(16px * var(--ui-radius, 1));
+  background: #fff;
+}
+
+.qr-off {
+  padding: 3px 10px;
+  border-radius: var(--ui-pill, 999px);
+  background: #fdecec;
+  color: var(--md-danger);
+  font-size: 12.5px;
+}
+
+.qr-copy {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+}
+
+.qr-copy input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--md-border);
+  border-radius: calc(10px * var(--ui-radius, 1));
+  background: var(--md-soft);
+  color: var(--md-text);
+  font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.qr-modal-foot {
+  flex-wrap: wrap;
+  justify-content: center !important;
+}
+
+.qr-modal-foot a.md-btn {
+  text-decoration: none;
+}
+
+@media (max-width: 520px) {
+  .qr-card {
+    flex-direction: column;
+    align-items: center;
+  }
+  .qr-body {
+    width: 100%;
+  }
+}

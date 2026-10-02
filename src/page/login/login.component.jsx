@@ -134,7 +134,7 @@ function LoginComponent() {
           <KidsDecor variant="blocks" className="lg-decor lg-decor-blocks" />
           <KidsDecor variant="duck" className="lg-decor lg-decor-duck" />
           <Star className="lg-star lg-star-1" color="#fbbf24" />
-          <Star className="lg-star lg-star-2" color="#9fd8b5" />
+          <Star className="lg-star lg-star-2" style={{ color: "var(--color-primary-mint)" }} />
         </aside>
 
         {/* ================= Right: form ================= */}

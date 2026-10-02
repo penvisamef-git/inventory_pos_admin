@@ -5,6 +5,7 @@ import { canManageStock } from "../stock/stockOptions";
 import { langLabel, nameOf, TgBubble } from "./telegramOptions";
 import { L } from "../../../i18n";
 import "./telegram.style.css";
+import Select from "../../util/Select"; // searchable <select>
 
 const KEY = "inventory_pos_tg_chats"; // last chosen groups (this browser only)
 const lastChats = () => {
@@ -207,13 +208,13 @@ export function SendTelegramDialog({ reports = [], warehouseIds = [], categoryId
                 <div className="tg-send-preview-head">
                   <span>{L("មើលជាមុន", "Preview")}</span>
                   {codes.length > 1 && (
-                    <select className="md-filter" value={previewCode} onChange={(e) => setPreviewCode(e.target.value)}>
+                    <Select className="md-filter" value={previewCode} onChange={(e) => setPreviewCode(e.target.value)}>
                       {codes.map((c) => (
                         <option key={c} value={c}>
                           {nameOf(reportList.find((r) => r.code === c)) || c}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   )}
                 </div>
                 <div className="tg-chat-bg tg-send-bubbles">

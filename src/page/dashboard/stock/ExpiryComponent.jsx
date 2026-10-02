@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import { RefreshCw, CalendarClock } from "lucide-react";
 import { stockService, warehouseService } from "../../../api/api.service";
 import { OptionChips, dateOnly, qtyText, valueName } from "./stockOptions";
@@ -9,6 +9,7 @@ import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "../product/product.style.css";
 import "./stock.style.css";
+import Select from "../../util/Select"; // searchable <select>
 
 // Batches expiring within N days (default: Setting.expiry_alert_days), nearest first
 function ExpiryComponent() {
@@ -25,12 +26,18 @@ function ExpiryComponent() {
   useEffect(() => {
     warehouseService.all().then((r) => setWarehouses(r.data || [])).catch(() => {});
   }, []);
+  // cached (api.client.js): last copy at once, then a quiet refresh
+  const loadSeq = useRef(0);
   const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const r = await stockService.expiry({ warehouse_id: warehouseId || undefined, days: days || undefined });
+    const seq = ++loadSeq.current;
+    const apply = (r) => {
+      if (seq !== loadSeq.current) return;
       setRows(r.data || []);
       setUsedDays(r.days);
+    };
+    setLoading(true);
+    try {
+      apply(await stockService.expiry({ warehouse_id: warehouseId || undefined, days: days || undefined }, { onFresh: apply }));
     } catch {
       setRows([]);
     } finally {
@@ -44,18 +51,18 @@ function ExpiryComponent() {
     <div className="md-page">
       <div className="md-toolbar">
         <div className="md-toolbar-left">
-          <select className="md-filter" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} hidden={!!portal}>
+          <Select className="md-filter" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} hidden={!!portal}>
             <option value="">{L("-- គ្រប់ឃ្លាំង --", "-- All warehouses --")}</option>
             {warehouses.map((w) => (
               <option key={w._id} value={w._id}>{w.code}</option>
             ))}
-          </select>
-          <select className="md-filter" value={days} onChange={(e) => setDays(e.target.value)}>
+          </Select>
+          <Select className="md-filter" value={days} onChange={(e) => setDays(e.target.value)}>
             <option value="">{L(`ក្នុង ${usedDays ?? "…"} ថ្ងៃ (ការកំណត់)`, `Within ${usedDays ?? "…"} days (setting)`)}</option>
             {[30, 60, 90, 180, 365].map((d) => (
               <option key={d} value={d}>{L(`ក្នុង ${d} ថ្ងៃ`, `Within ${d} days`)}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="md-toolbar-actions">
           <SendTelegramButton key={`${warehouseId}|${days}`} reports={["near_expiry"]} warehouseIds={warehouseId ? [warehouseId] : []} days={days || undefined} />

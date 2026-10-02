@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
+import "./page/theme/themes.css";
 import RouteComponent from "./routes/route.component";
 import reportWebVitals from "./reportWebVitals";
 

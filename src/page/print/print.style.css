@@ -1,0 +1,305 @@
+/* =========================
+   Printed documents (A4) — /print/:type/:id
+   Always black on white (also in dark mode / any theme); the theme's main colour only for small accents.
+========================= */
+
+@page {
+  size: A4;
+  margin: 12mm 11mm 14mm;
+}
+
+html:has(.prt-page),
+body:has(.prt-page) {
+  background: #e9ebee !important;
+  color-scheme: light;
+}
+
+.prt-msg {
+  padding: 40px;
+  font-family: var(--font-body);
+}
+
+.prt-page {
+  --pr-accent: var(--color-primary-main, #1f7a4d);
+  width: 210mm;
+  min-height: 297mm;
+  margin: 16px auto;
+  padding: 12mm 11mm 14mm;
+  background: #fff;
+  color: #111;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  line-height: 1.45;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+}
+
+.prt-page small {
+  font-size: 0.82em;
+  color: #666;
+  font-weight: 400;
+}
+
+.prt-tools {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.prt-tools button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #d0d4da;
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.prt-tools button:first-child {
+  border-color: var(--pr-accent);
+  background: var(--pr-accent);
+  color: #fff;
+}
+
+/* ---------- header ---------- */
+.prt-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #111;
+}
+
+.prt-company {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.prt-company img {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.prt-company div {
+  display: flex;
+  flex-direction: column;
+}
+
+.prt-company b {
+  font-size: 15px;
+}
+
+.prt-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.prt-title h1 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.prt-title h1 span {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.prt-no {
+  margin-top: 4px;
+  font: 700 14px ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--pr-accent);
+}
+
+.prt-state {
+  margin-top: 3px;
+  padding: 1px 8px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  font-size: 10.5px;
+}
+
+.prt-cancelled {
+  border-color: #c00;
+  color: #c00;
+}
+
+/* ---------- info ---------- */
+.prt-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 24px;
+  margin: 10px 0 12px;
+}
+
+.prt-info div {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 8px;
+}
+
+.prt-info span {
+  color: #555;
+}
+
+/* ---------- lines ---------- */
+.prt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prt-table th,
+.prt-table td {
+  padding: 5px 6px;
+  border-bottom: 1px solid #d9d9d9;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prt-table thead th {
+  border-top: 1.5px solid #111;
+  border-bottom: 1.5px solid #111;
+  background: #f4f5f6;
+  font-size: 10.5px;
+  font-weight: 700;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.prt-table thead th small {
+  display: block;
+  font-size: 9px;
+}
+
+.prt-table tbody tr {
+  break-inside: avoid;
+}
+
+.prt-table td b {
+  display: block;
+  font-weight: 600;
+}
+
+.prt-table td code {
+  font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #555;
+}
+
+.prt-table td em {
+  display: block;
+  font-size: 10px;
+  color: #666;
+}
+
+.prt-table tfoot td {
+  border-top: 1.5px solid #111;
+  border-bottom: none;
+  font-weight: 600;
+}
+
+.prt-n {
+  width: 26px;
+  color: #777;
+}
+
+.prt-r {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.prt-batch {
+  font-size: 10.5px;
+}
+
+.prt-box-h {
+  width: 110px;
+}
+
+.prt-box {
+  height: 26px;
+  border-bottom: 1px solid #999 !important;
+}
+
+.prt-up {
+  color: #0a7a3a;
+  font-weight: 700;
+}
+
+.prt-down {
+  color: #c0262d;
+  font-weight: 700;
+}
+
+.prt-note {
+  margin: 10px 0 0;
+}
+
+.prt-note span {
+  color: #555;
+}
+
+/* ---------- signatures ---------- */
+.prt-sign {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 26px;
+  margin-top: 46px;
+  break-inside: avoid;
+}
+
+.prt-sign div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.prt-line {
+  width: 100%;
+  height: 52px;
+  border-bottom: 1px solid #333;
+  margin-bottom: 6px;
+}
+
+.prt-date {
+  margin-top: 8px;
+}
+
+.prt-foot {
+  margin-top: 22px;
+  font-size: 9.5px;
+  color: #888;
+  text-align: right;
+}
+
+/* ---------- print ---------- */
+@media print {
+  html:has(.prt-page),
+  body:has(.prt-page) {
+    background: #fff !important;
+  }
+  .prt-tools {
+    display: none;
+  }
+  .prt-page {
+    width: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}

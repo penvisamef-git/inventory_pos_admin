@@ -4,6 +4,7 @@ import { telegramService } from "../../../api/api.service";
 import { dateTimeText } from "../master_data/MasterDataPage";
 import { nameOf, TgBubble } from "./telegramOptions";
 import { L } from "../../../i18n";
+import Select from "../../util/Select"; // searchable <select>
 
 const STATES = {
   pending: { label: L("រង់ចាំ", "Pending"), badge: "md-badge-gold" },
@@ -94,7 +95,7 @@ function MessageTab({ meta, chats }) {
 
       <div className="md-toolbar">
         <div className="md-toolbar-left">
-          <select
+          <Select
             className="md-filter"
             value={chatRef}
             onChange={(e) => {
@@ -108,7 +109,7 @@ function MessageTab({ meta, chats }) {
                 {c.title}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="md-toolbar-actions">
           <button type="button" className="md-btn md-btn-ghost" onClick={load} disabled={loading} title={L("ផ្ទុកឡើងវិញ", "Reload")}>

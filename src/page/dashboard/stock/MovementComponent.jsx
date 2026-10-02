@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import { RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { stockService, warehouseService } from "../../../api/api.service";
 import { MovementTable } from "./MovementDrawer";
@@ -9,6 +9,7 @@ import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "../product/product.style.css";
 import "./stock.style.css";
+import Select from "../../util/Select"; // searchable <select>
 
 // Whole stock ledger with filters
 function MovementComponent() {
@@ -28,11 +29,20 @@ function MovementComponent() {
     warehouseService.all().then((r) => setWarehouses(r.data || [])).catch(() => {});
   }, []);
   const key = JSON.stringify(f);
+  // cached pages (api.client.js): last copy at once, quiet refresh, next page pre-loaded
+  const loadSeq = useRef(0);
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const apply = (r) => {
+      if (seq !== loadSeq.current) return;
+      setRows(r.data || []);
+      setPages(Math.max(r.pagination?.totalPages || 1, 1));
+      setTotal(r.pagination?.total || 0);
+    };
     setLoading(true);
     try {
       const q = JSON.parse(key);
-      const r = await stockService.movement({
+      const params = {
         page,
         limit: 30,
         sort: "movement_date",
@@ -41,10 +51,10 @@ function MovementComponent() {
         type: q.type || undefined,
         from: q.from ? new Date(`${q.from}T00:00:00+07:00`).toISOString() : undefined,
         to: q.to ? new Date(`${q.to}T23:59:59+07:00`).toISOString() : undefined,
-      });
-      setRows(r.data || []);
-      setPages(Math.max(r.pagination?.totalPages || 1, 1));
-      setTotal(r.pagination?.total || 0);
+      };
+      const r = await stockService.movement(params, { onFresh: apply });
+      apply(r);
+      if (page < (r.pagination?.totalPages || 1)) stockService.movement({ ...params, page: page + 1 }, { prefetch: true });
     } catch {
       setRows([]);
     } finally {
@@ -62,18 +72,18 @@ function MovementComponent() {
     <div className="md-page">
       <div className="md-toolbar">
         <div className="md-toolbar-left">
-          <select className="md-filter" value={f.warehouse_id} onChange={(e) => set("warehouse_id", e.target.value)} hidden={!!portal}>
+          <Select className="md-filter" value={f.warehouse_id} onChange={(e) => set("warehouse_id", e.target.value)} hidden={!!portal}>
             <option value="">{L("-- គ្រប់ឃ្លាំង --", "-- All warehouses --")}</option>
             {warehouses.map((w) => (
               <option key={w._id} value={w._id}>{w.code}</option>
             ))}
-          </select>
-          <select className="md-filter" value={f.type} onChange={(e) => set("type", e.target.value)}>
+          </Select>
+          <Select className="md-filter" value={f.type} onChange={(e) => set("type", e.target.value)}>
             <option value="">{L("-- គ្រប់ប្រភេទ --", "-- All types --")}</option>
             {Object.entries(MOVE_TYPES).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
-          </select>
+          </Select>
           <input type="date" className="md-filter" value={f.from} onChange={(e) => set("from", e.target.value)} />
           <input type="date" className="md-filter" value={f.to} onChange={(e) => set("to", e.target.value)} />
         </div>

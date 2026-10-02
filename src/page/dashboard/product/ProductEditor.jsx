@@ -3,6 +3,7 @@ import { X, Plus, ImagePlus, Image as ImageIcon, Wand2, Layers, Package, Barcode
 import { productService, uploadService } from "../../../api/api.service";
 import { nameKh } from "./productOptions";
 import { L } from "../../../i18n";
+import Select from "../../util/Select"; // searchable <select>
 
 const MAX_ATTRIBUTES = 3;
 const idOf = (v) => String(v?._id || v || "");
@@ -351,12 +352,12 @@ function ProductEditor({ productId, lookups, onClose, onSaved }) {
                     </div>
                     <div className="md-field">
                       <label>{L("ប្រភេទទំនិញ", "Category")}<span className="md-required">*</span></label>
-                      <select value={form.category_id} onChange={(e) => set({ category_id: e.target.value })} disabled={disabled}>
+                      <Select value={form.category_id} onChange={(e) => set({ category_id: e.target.value })} disabled={disabled}>
                         <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
                         {categories.map((c) => (
                           <option key={c.value} value={c.value}>{c.label}</option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                     <div className="md-field">
                       <label>{L("ឈ្មោះ (ខ្មែរ)", "Name (Khmer)")}<span className="md-required">*</span></label>
@@ -368,12 +369,12 @@ function ProductEditor({ productId, lookups, onClose, onSaved }) {
                     </div>
                     <div className="md-field">
                       <label>{L("ម៉ាក", "Brand")}</label>
-                      <select value={form.brand_id} onChange={(e) => set({ brand_id: e.target.value })} disabled={disabled}>
+                      <Select value={form.brand_id} onChange={(e) => set({ brand_id: e.target.value })} disabled={disabled}>
                         <option value="">{L("-- គ្មាន --", "-- None --")}</option>
                         {brands.map((b) => (
                           <option key={b._id} value={b._id}>{nameKh(b)}</option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                     <div className="md-field">
                       <label>{L("ពិពណ៌នា", "Description")}</label>
@@ -392,24 +393,24 @@ function ProductEditor({ productId, lookups, onClose, onSaved }) {
                 <div className="pe-units">
                   <div className="md-field pe-base-unit">
                     <label>{L("ឯកតាមូលដ្ឋាន", "Base unit")}<span className="md-required">*</span></label>
-                    <select value={form.base_unit_id} onChange={(e) => set({ base_unit_id: e.target.value })} disabled={disabled}>
+                    <Select value={form.base_unit_id} onChange={(e) => set({ base_unit_id: e.target.value })} disabled={disabled}>
                       <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
                       {units.map((u) => (
                         <option key={u._id} value={u._id}>{nameKh(u)} ({u.code})</option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   {form.units.map((u, i) => (
                     <div className="pe-unit-row" key={i}>
                       <span className="pe-eq">1</span>
-                      <select value={u.unit_id} onChange={(e) => updateUnit(i, { unit_id: e.target.value })} disabled={disabled}>
+                      <Select value={u.unit_id} onChange={(e) => updateUnit(i, { unit_id: e.target.value })} disabled={disabled}>
                         <option value="">{L("-- ឯកតា --", "-- Unit --")}</option>
                         {units
                           .filter((x) => String(x._id) !== form.base_unit_id && (String(x._id) === u.unit_id || !form.units.some((y) => y.unit_id === String(x._id))))
                           .map((x) => (
                             <option key={x._id} value={x._id}>{nameKh(x)}</option>
                           ))}
-                      </select>
+                      </Select>
                       <span className="pe-eq">=</span>
                       <input type="number" min="0" step="any" value={u.factor} onChange={(e) => updateUnit(i, { factor: e.target.value })} disabled={disabled} />
                       <span className="pe-eq">{baseUnit ? nameKh(baseUnit) : L("ឯកតាមូលដ្ឋាន", "base unit")}</span>

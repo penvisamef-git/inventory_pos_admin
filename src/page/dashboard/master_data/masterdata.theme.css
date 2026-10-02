@@ -19,7 +19,7 @@
 .md-card {
   background: var(--color-background-card);
   border: none;
-  border-radius: 22px;
+  border-radius: calc(22px * var(--ui-radius, 1));
   box-shadow: none;
   overflow: hidden;
 }
@@ -42,7 +42,7 @@
 
 /* ---------- Buttons (pill) ---------- */
 .md-btn {
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   height: 40px;
   padding: 0 18px;
   font-weight: 600;
@@ -50,7 +50,7 @@
 
 .md-btn-primary {
   background: var(--color-gradient-button, var(--md-primary));
-  box-shadow: 0 6px 14px rgba(20, 83, 45, 0.22);
+  box-shadow: 0 6px 14px rgba(var(--color-primary-rgb, 20, 83, 45), 0.22);
 }
 
 .md-btn-primary:hover:not(:disabled) {
@@ -69,7 +69,7 @@
 
 /* ---------- Search + filters (pill) ---------- */
 .md-search {
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   height: 42px;
   border-color: transparent;
   background: var(--color-background-card);
@@ -78,7 +78,7 @@
 
 /* ---------- Modal ---------- */
 .md-modal {
-  border-radius: 24px;
+  border-radius: calc(24px * var(--ui-radius, 1));
   box-shadow: 0 30px 70px rgba(13, 30, 21, 0.25);
 }
 
@@ -91,7 +91,7 @@
 .md-field input,
 .md-field select,
 .md-field textarea {
-  border-radius: 12px;
+  border-radius: calc(12px * var(--ui-radius, 1));
 }
 
 .md-field input:focus,
@@ -122,7 +122,7 @@
 .md-filter {
   height: 42px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   padding: 0 16px;
   font: inherit;
   color: var(--md-text);
@@ -140,7 +140,7 @@
 .md-thumb {
   width: 52px;
   height: 52px;
-  border-radius: 10px;
+  border-radius: calc(10px * var(--ui-radius, 1));
   object-fit: cover;
   background: var(--md-gold-soft);
   border: 1px solid var(--md-border);
@@ -161,14 +161,14 @@
   gap: 14px;
   padding: 10px;
   border: 1px dashed var(--md-gold);
-  border-radius: 12px;
+  border-radius: calc(12px * var(--ui-radius, 1));
   background: var(--md-gold-soft);
 }
 
 .md-image-preview {
   width: 96px;
   height: 96px;
-  border-radius: 10px;
+  border-radius: calc(10px * var(--ui-radius, 1));
   object-fit: cover;
   background: var(--color-background-card);
   border: 1px solid var(--md-border);
@@ -270,7 +270,7 @@
   color: var(--color-text-secondary);
   background: var(--color-background-soft);
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: calc(6px * var(--ui-radius, 1));
 }
 
 .md-icon-btn-gold {
@@ -297,7 +297,7 @@
   align-items: center;
   gap: 8px;
   padding: 7px 14px 7px 8px;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   border: 1px solid var(--md-border);
   background: var(--color-background-card);
   color: var(--md-text);
@@ -381,7 +381,7 @@
   height: 36px;
   flex-shrink: 0;
   padding: 2px;
-  border-radius: 10px;
+  border-radius: calc(10px * var(--ui-radius, 1));
   cursor: pointer;
 }
 
@@ -403,7 +403,7 @@
   align-items: center;
   gap: 5px;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   font-size: 12px;
   background: var(--color-background-soft);
   color: var(--md-text);

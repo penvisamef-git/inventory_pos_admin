@@ -8,7 +8,7 @@ import React from "react";
 function Blocks() {
   const block = (x, y, fill, letter, rot = 0) => (
     <g transform={`rotate(${rot} ${x + 30} ${y + 30})`}>
-      <rect x={x} y={y} width="60" height="60" rx="10" fill={fill} />
+      <rect x={x} y={y} width="60" height="60" rx="10" style={{ fill }} />
       <rect x={x + 6} y={y + 6} width="48" height="48" rx="7" fill="rgba(255,255,255,0.22)" />
       <text x={x + 30} y={y + 43} textAnchor="middle" fontSize="34" fontWeight="800" fill="#ffffff" fontFamily="Arial, sans-serif">
         {letter}
@@ -18,7 +18,7 @@ function Blocks() {
   return (
     <>
       <ellipse cx="100" cy="176" rx="74" ry="9" fill="rgba(31,35,48,0.08)" />
-      {block(36, 108, "#1f7a4d", "A")}
+      {block(36, 108, "var(--color-primary-main)", "A")}
       {block(104, 108, "#f59e0b", "B")}
       {block(70, 44, "#f472b6", "C", -8)}
     </>
@@ -30,11 +30,11 @@ function Bottle() {
     <>
       <ellipse cx="100" cy="182" rx="40" ry="7" fill="rgba(31,35,48,0.08)" />
       <path d="M88 14 Q100 2 112 14 L114 34 L86 34 Z" fill="#f59e0b" />
-      <rect x="76" y="32" width="48" height="16" rx="6" fill="#1f7a4d" />
-      <rect x="66" y="46" width="68" height="132" rx="24" fill="#e7f3ec" stroke="#1f7a4d" strokeWidth="4" />
+      <rect x="76" y="32" width="48" height="16" rx="6" style={{ fill: "var(--color-primary-main)" }} />
+      <rect x="66" y="46" width="68" height="132" rx="24" style={{ fill: "var(--color-primary-soft)", stroke: "var(--color-primary-main)" }} strokeWidth="4" />
       <rect x="70" y="104" width="60" height="70" rx="20" fill="#ffffff" />
       {[70, 90, 110, 130, 150].map((y) => (
-        <line key={y} x1="70" x2="86" y1={y} y2={y} stroke="#1f7a4d" strokeWidth="3" strokeLinecap="round" />
+        <line key={y} x1="70" x2="86" y1={y} y2={y} style={{ stroke: "var(--color-primary-main)" }} strokeWidth="3" strokeLinecap="round" />
       ))}
       <circle cx="112" cy="80" r="8" fill="#f472b6" opacity="0.8" />
     </>

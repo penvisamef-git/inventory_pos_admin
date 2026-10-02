@@ -8,7 +8,8 @@ import apiClient from "./api.client";
  */
 function createResource(route) {
   return {
-    list: (params) => apiClient.get(`/${route}`, params),
+    // opts: { onFresh } → show the last copy at once, then the fresh one · { prefetch: true } → warm the cache
+    list: (params, opts) => apiClient.get(`/${route}`, params, opts),
     all: (params) => apiClient.get(`/${route}-all`, params),
     get: (id) => apiClient.get(`/${route}/${id}`),
     create: (data) => apiClient.post(`/${route}`, data),
@@ -56,6 +57,8 @@ export const warehouseService = createResource("setup/warehouse");
 export const settingService = {
   get: () => apiClient.get("/setup/setting"),
   update: (data) => apiClient.put("/setup/setting", data),
+  // { ui_theme } — no login needed (login page uses it too)
+  theme: () => apiClient.get("/setup/theme"),
 };
 
 // USD → KHR history; rows have state: "current" | "upcoming" | "past" (only upcoming can change)
@@ -87,12 +90,16 @@ export const productService = {
   ...createResource("product/item"),
   barcode: (code) => apiClient.get(`/product/item/barcode/${encodeURIComponent(code)}`),
   checkCode: (value, productId) => apiClient.get("/product/item/check-code", { value, product_id: productId || undefined }),
+  // Excel import: rows = [{ product_code, name_kh, … }] · apply false = preview only
+  importRows: (rows, apply) => apiClient.post("/product/import", { rows, apply: !!apply }),
+  exportRows: () => apiClient.get("/product/import/export"),
+  importLists: () => apiClient.get("/product/import/lists"),
 };
 
 // Sale prices (USD). No update: a change is a new row. warehouse_id null = default, shop id = override (price null = back to default)
 export const priceService = {
   history: (params) => apiClient.get("/product/price", params),
-  current: (params) => apiClient.get("/product/price/current", params),
+  current: (params, opts) => apiClient.get("/product/price/current", params, opts),
   create: (data) => apiClient.post("/product/price", data),
   bulk: (data) => apiClient.post("/product/price/bulk", data),
   remove: (id) => apiClient.delete(`/product/price/${id}`),
@@ -110,9 +117,9 @@ export const supplierService = createResource("purchase/supplier");
 // read-only stock views (shop manager: own shops, no cost)
 export const stockService = {
   // { warehouse_id, category_id, product_id, q, only: low|negative|in_stock|out, page, limit } → data + warehouses + summary
-  balance: (params) => apiClient.get("/stock/balance", params),
-  movement: (params) => apiClient.get("/stock/movement", params),
-  expiry: (params) => apiClient.get("/stock/expiry", params),
+  balance: (params, opts) => apiClient.get("/stock/balance", params, opts),
+  movement: (params, opts) => apiClient.get("/stock/movement", params, opts),
+  expiry: (params, opts) => apiClient.get("/stock/expiry", params, opts),
   availability: (warehouseId, variantIds) => apiClient.get("/stock/availability", { warehouse_id: warehouseId, variant_ids: variantIds.join(",") }),
   fefo: (params) => apiClient.get("/stock/fefo", params),
 };
@@ -120,7 +127,7 @@ export const stockService = {
 // stock documents: list / get / create / update (draft) / cancel / post
 function stockDoc(route) {
   return {
-    list: (params) => apiClient.get(`/${route}`, params),
+    list: (params, opts) => apiClient.get(`/${route}`, params, opts),
     get: (id) => apiClient.get(`/${route}/${id}`),
     create: (data) => apiClient.post(`/${route}`, data),
     update: (id, data) => apiClient.put(`/${route}/${id}`, data),
@@ -129,6 +136,18 @@ function stockDoc(route) {
   };
 }
 export const openingService = stockDoc("stock/opening");
+
+// Stock count (blind): counting → submitted → posted (central) | cancelled
+export const countService = {
+  list: (params, opts) => apiClient.get("/stock/count", params, opts),
+  get: (id) => apiClient.get(`/stock/count/${id}`),
+  create: (data) => apiClient.post("/stock/count", data),
+  save: (id, data) => apiClient.put(`/stock/count/${id}`, data),
+  submit: (id, data) => apiClient.put(`/stock/count/submit/${id}`, data),
+  reopen: (id) => apiClient.put(`/stock/count/reopen/${id}`),
+  cancel: (id) => apiClient.put(`/stock/count/cancel/${id}`),
+  post: (id) => apiClient.put(`/stock/count/post/${id}`),
+};
 export const receiveService = stockDoc("stock/receive");
 export const adjustmentService = stockDoc("stock/adjustment");
 export const transferService = {
@@ -140,8 +159,8 @@ export const transferService = {
 
 // ================= Shop portal (one warehouse) =================
 export const shopService = {
-  summary: (warehouseId) => apiClient.get("/shop/summary", { warehouse_id: warehouseId }),
-  staff: (warehouseId) => apiClient.get("/shop/staff", { warehouse_id: warehouseId }),
+  summary: (warehouseId, opts) => apiClient.get("/shop/summary", { warehouse_id: warehouseId }, opts),
+  staff: (warehouseId, opts) => apiClient.get("/shop/staff", { warehouse_id: warehouseId }, opts),
   // cashier only: { warehouse_id, firstname, lastname, email, contact, password, pos_pin? }
   createCashier: (data) => apiClient.post("/shop/staff", data),
   updateCashier: (id, data) => apiClient.put(`/shop/staff/${id}`, data),
@@ -192,13 +211,45 @@ export const telegramService = {
   retry: (id) => apiClient.put(`/telegram/message/retry/${id}`, {}),
 };
 
+// ================= Global search (top bar / Ctrl+K) =================
+// → { products, skus, warehouses, documents, suppliers, categories, brands, users } (only what the user may see)
+// QR code / public catalog links (admin, central manager) · publicPage(token, { q, category_id, only, page, limit }) needs no login
+export const catalogService = {
+  list: (params, opts) => apiClient.get("/catalog", params, opts),
+  create: (data) => apiClient.post("/catalog", data),
+  update: (id, data) => apiClient.put(`/catalog/${id}`, data),
+  newToken: (id) => apiClient.put(`/catalog/new-token/${id}`),
+  remove: (id) => apiClient.delete(`/catalog/${id}`),
+  publicPage: (token, params) => apiClient.publicGet(`/catalog/public/${encodeURIComponent(token)}`, params),
+};
+
+// Personal notes: own notes only · super admin: everyone's (+ ?user_id=, owners())
+export const noteService = {
+  list: (params) => apiClient.get("/note", params),
+  owners: () => apiClient.get("/note/owners"),
+  get: (id) => apiClient.get(`/note/${id}`),
+  create: (data) => apiClient.post("/note", data),
+  update: (id, data) => apiClient.put(`/note/${id}`, data),
+  remove: (id) => apiClient.delete(`/note/${id}`),
+};
+
+export const searchService = {
+  query: (q) => apiClient.get("/search", { q }),
+};
+
+// ================= Dashboard =================
+// one request for the home page: { warehouses, users (admin only), rate, methods, products, priced, opening }
+export const dashboardService = {
+  summary: () => apiClient.get("/dashboard/summary"),
+};
+
 // ================= Session & Log =================
 export const sessionService = {
-  list: (params) => apiClient.get("/session", params),
+  list: (params, opts) => apiClient.get("/session", params, opts),
   remove: (id) => apiClient.delete(`/session/${id}`),
 };
 
 export const activityLogService = {
-  list: (params) => apiClient.get("/activity_log", params),
+  list: (params, opts) => apiClient.get("/activity_log", params, opts),
   categories: () => apiClient.get("/activity_log/category-all"),
 };

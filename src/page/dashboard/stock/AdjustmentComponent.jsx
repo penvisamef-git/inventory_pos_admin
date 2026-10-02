@@ -5,6 +5,7 @@ import { REASONS, canManageStock, isShopUser, labelOf, nameKh, usd } from "./sto
 import { L } from "../../../i18n";
 import { usePortal } from "../../portal/portalContext";
 import SendTelegramButton from "../telegram/SendTelegram";
+import Select from "../../util/Select"; // searchable <select>
 
 const MANUAL = REASONS.filter((r) => !r.system);
 const dirOf = (reason) => REASONS.find((r) => r.value === reason)?.dir || "out";
@@ -18,6 +19,7 @@ function AdjustmentComponent() {
   const config = {
     toolbarExtra: () => <SendTelegramButton reports={["pending_work"]} warehouseIds={portal ? [portal._id] : []} />,
     service: adjustmentService,
+    printType: "adjustment",
     docLabel: L("កែតម្រូវស្តុក", "Stock adjustment"),
     createLabel: L("កែតម្រូវស្តុក", "New adjustment"),
     canCreate: manage || shop,
@@ -27,20 +29,20 @@ function AdjustmentComponent() {
       <>
         <div className="md-field" hidden={!!portal}>
           <label>{L("ឃ្លាំង", "Warehouse")}<span className="md-required">*</span></label>
-          <select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
+          <Select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
             <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
             {ctx.warehouses.map((w) => (
               <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="md-field">
           <label>{L("មូលហេតុ", "Reason")}<span className="md-required">*</span></label>
-          <select className="pe-input" value={form.reason} onChange={(e) => set({ reason: e.target.value })} disabled={disabled}>
+          <Select className="pe-input" value={form.reason} onChange={(e) => set({ reason: e.target.value })} disabled={disabled}>
             {MANUAL.map((r) => (
               <option key={r.value} value={r.value}>{r.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <p className="sd-hint">
           {dirOf(form.reason) === "out"

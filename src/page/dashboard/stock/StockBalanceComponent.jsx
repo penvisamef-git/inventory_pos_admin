@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import { Search, X, RefreshCw, ChevronLeft, ChevronRight, AlertTriangle, History } from "lucide-react";
 import { categoryService, stockService } from "../../../api/api.service";
 import { imageCell } from "../master_data/MasterDataPage";
@@ -12,6 +12,8 @@ import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "../product/product.style.css";
 import "./stock.style.css";
+import useUrlQuery from "../../util/useUrlQuery";
+import Select from "../../util/Select"; // searchable <select>
 
 const ONLY = [
   { value: "in_stock", label: L("មានស្តុក", "In stock") },
@@ -37,6 +39,7 @@ function StockBalanceComponent() {
   const [only, setOnly] = useState("");
   const [keyword, setKeyword] = useState("");
   const [search, setSearch] = useState("");
+  useUrlQuery(setKeyword); // ?q= from the global search
   const [page, setPage] = useState(1);
   const [res, setRes] = useState({ data: [], warehouses: [], summary: {}, pagination: {} });
   const [loading, setLoading] = useState(false);
@@ -54,13 +57,22 @@ function StockBalanceComponent() {
     return () => clearTimeout(t);
   }, [keyword]);
 
+  // cached pages (api.client.js): last copy at once, quiet refresh, next page pre-loaded
+  const loadSeq = useRef(0);
   const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    const apply = (r) => {
+      if (seq !== loadSeq.current) return;
+      setRes(r);
+      if (!warehouseId) setWarehouseList(r.warehouses || []);
+    };
+    const params = { page, limit: 20, q: search || undefined, warehouse_id: warehouseId || undefined, category_id: categoryId || undefined, only: only || undefined, with_price: warehouseId ? "true" : undefined };
     setLoading(true);
     setError("");
     try {
-      const r = await stockService.balance({ page, limit: 20, q: search || undefined, warehouse_id: warehouseId || undefined, category_id: categoryId || undefined, only: only || undefined, with_price: warehouseId ? "true" : undefined });
-      setRes(r);
-      if (!warehouseId) setWarehouseList(r.warehouses || []);
+      const r = await stockService.balance(params, { onFresh: apply });
+      apply(r);
+      if (page < (r.pagination?.totalPages || 1)) stockService.balance({ ...params, page: page + 1 }, { prefetch: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -100,25 +112,25 @@ function StockBalanceComponent() {
             {keyword && <button type="button" onClick={() => setKeyword("")}><X size={14} /></button>}
           </div>
           {warehouseList.length > 1 && !portal && (
-            <select className="md-filter" value={warehouseId} onChange={(e) => { setPage(1); setWarehouseId(e.target.value); }}>
+            <Select className="md-filter" value={warehouseId} onChange={(e) => { setPage(1); setWarehouseId(e.target.value); }}>
               <option value="">{L("-- គ្រប់ឃ្លាំង --", "-- All warehouses --")}</option>
               {warehouseList.map((w) => (
                 <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
               ))}
-            </select>
+            </Select>
           )}
-          <select className="md-filter" value={categoryId} onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}>
+          <Select className="md-filter" value={categoryId} onChange={(e) => { setPage(1); setCategoryId(e.target.value); }}>
             <option value="">{L("-- ប្រភេទទាំងអស់ --", "-- All categories --")}</option>
             {categories.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
-          </select>
-          <select className="md-filter" value={only} onChange={(e) => { setPage(1); setOnly(e.target.value); }}>
+          </Select>
+          <Select className="md-filter" value={only} onChange={(e) => { setPage(1); setOnly(e.target.value); }}>
             <option value="">{L("-- ទាំងអស់ --", "-- All --")}</option>
             {ONLY.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="md-toolbar-actions">
           <SendTelegramButton

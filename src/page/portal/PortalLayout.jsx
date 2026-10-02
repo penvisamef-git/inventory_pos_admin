@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { preloadPages } from "../../routes/lazyPage";
 import { NavLink, Navigate, useNavigate, useParams, Link } from "react-router-dom";
-import { LayoutDashboard, PackageSearch, Truck, ClipboardPen, CalendarClock, ListOrdered, Users, LogOut, Store, Warehouse as WarehouseIcon, ShieldCheck, ReceiptText, X, Menu } from "lucide-react";
+import { LayoutDashboard, PackageSearch, Truck, ClipboardPen, ClipboardCheck, CalendarClock, ListOrdered, History, StickyNote, Users, LogOut, Store, Warehouse as WarehouseIcon, ShieldCheck, ReceiptText, X, Menu } from "lucide-react";
 import { authService, warehouseService } from "../../api/api.service";
 import Auth from "../util/auth";
 import { portalOnly, roleOf } from "../util/permission";
@@ -15,14 +16,18 @@ import "../theme/default/color.script";
 import "../dashboard/master_data/masterdata.style.css";
 import "../dashboard/master_data/masterdata.theme.css";
 import "./portal.style.css";
+import Select from "../util/Select"; // searchable <select>
 
 export const PORTAL_PAGES = [
   { url: "", icon: LayoutDashboard, name: L("ផ្ទាំងគ្រប់គ្រង", "Dashboard") },
   { url: "stock", icon: PackageSearch, name: L("ទំនិញ និងស្តុក", "Items & stock") },
   { url: "transfer", icon: Truck, name: L("ផ្ទេរស្តុក", "Transfers") },
   { url: "adjustment", icon: ClipboardPen, name: L("កែតម្រូវ", "Adjustments") },
+  { url: "count", icon: ClipboardCheck, name: L("រាប់ស្តុក", "Stock count") },
   { url: "expiry", icon: CalendarClock, name: L("ជិតផុតកំណត់", "Near expiry") },
   { url: "movement", icon: ListOrdered, name: L("ចលនាស្តុក", "Movements") },
+  { url: "log", icon: History, name: L("កំណត់ត្រាសកម្មភាព", "Activity log") },
+  { url: "note", icon: StickyNote, name: L("កំណត់ចំណាំ", "Notes") },
   { url: "staff", icon: Users, name: L("បុគ្គលិក", "Staff"), shopOnly: true },
   { url: "sales", icon: ReceiptText, name: L("ការលក់", "Sales"), soon: true },
 ];
@@ -32,6 +37,9 @@ export const PORTAL_PAGES = [
  * Shop managers see only their shops; admin / central manager can switch to any warehouse.
  */
 function PortalLayout({ page, children }) {
+  useEffect(() => {
+    preloadPages(); // the other portal screens' JS, in the background
+  }, []);
   const { code } = useParams();
   const navigate = useNavigate();
   const auth = new Auth();
@@ -91,6 +99,7 @@ function PortalLayout({ page, children }) {
   return (
     <PortalContext.Provider value={current}>
       <div className="pt-shell">
+        <div className="pt-sticky">
         <header className="pt-header">
           <button type="button" className="pt-menu-btn" onClick={() => setMenuOpen(!menuOpen)} aria-label={L("ម៉ឺនុយ", "Menu")}>
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -104,13 +113,13 @@ function PortalLayout({ page, children }) {
           </div>
 
           {warehouses.length > 1 && (
-            <select className="pt-switch" value={current.code} onChange={(e) => navigate(`/shop/${e.target.value}${page ? "/" + page : ""}`)} title={L("ប្តូរហាង / ឃ្លាំង", "Switch shop / warehouse")}>
+            <Select className="pt-switch" value={current.code} onChange={(e) => navigate(`/shop/${e.target.value}${page ? "/" + page : ""}`)} title={L("ប្តូរហាង / ឃ្លាំង", "Switch shop / warehouse")}>
               {warehouses.map((w) => (
                 <option key={w._id} value={w.code}>
                   {w.code} · {nameKh(w)}
                 </option>
               ))}
-            </select>
+            </Select>
           )}
 
           <div className="pt-right">
@@ -151,10 +160,11 @@ function PortalLayout({ page, children }) {
             );
           })}
         </nav>
+        </div>
 
         <main className="pt-main">
           {page !== "" && page !== "account" && <h1 className="pt-title">{pageInfo.name}</h1>}
-          {children}
+          <Suspense fallback={<div className="page-loading" />}>{children}</Suspense>
           <footer className="footer">© {new Date().getFullYear()} {APP_NAME} · {APP_VERSION_TEXT}</footer>
         </main>
 

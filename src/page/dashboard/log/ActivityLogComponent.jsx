@@ -3,6 +3,9 @@ import MasterDataPage from "../master_data/MasterDataPage";
 import { activityLogService } from "../../../api/api.service";
 
 import { L } from "../../../i18n";
+import Auth from "../../util/auth";
+import { roleOf } from "../../util/permission";
+import { ROLE } from "../user/userRoles";
 const CATEGORY_LABELS = {
   other: L("ផ្សេងៗ", "Other"),
   auth: L("ចូល / ចេញគណនី", "Login / logout"),
@@ -61,8 +64,12 @@ const COLUMNS = [
 
 const SEARCH_KEYS = ["title", "description"];
 
-// Read-only list of what happened in the system
+// Read-only list of what happened in the system.
+// Admin / super admin see everyone; any other role sees only their own rows (the API filters, the "By" column is hidden).
 function ActivityLogComponent() {
+  const role = roleOf(new Auth().getClientLogin());
+  const seesAll = role === ROLE.SUPER || role === ROLE.ADMIN;
+  const columns = useMemo(() => (seesAll ? COLUMNS : COLUMNS.filter((c) => c.key !== "by")), [seesAll]);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -84,15 +91,18 @@ function ActivityLogComponent() {
   );
 
   return (
-    <MasterDataPage
+    <>
+      {!seesAll && <p style={{ margin: "0 0 12px", color: "var(--color-text-secondary, #6b716e)", fontSize: 13.5 }}>{L("បង្ហាញតែសកម្មភាពរបស់អ្នកប៉ុណ្ណោះ", "Only your own activity is shown")}</p>}
+      <MasterDataPage
       title={L("កំណត់ត្រា", "Log")}
       service={activityLogService}
       fields={[]}
-      columns={COLUMNS}
+      columns={columns}
       searchKeys={SEARCH_KEYS}
       filters={filters}
       canEdit={false}
-    />
+      />
+    </>
   );
 }
 

@@ -25,3 +25,7 @@ yarn-error.log*
 
 # old design backup (local only)
 .design-backup/
+.vercel
+
+# Firebase deploy cache (local only)
+.firebase/

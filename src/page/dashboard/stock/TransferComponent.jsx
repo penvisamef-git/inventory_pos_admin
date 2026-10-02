@@ -7,6 +7,7 @@ import { canManageStock, isShopUser, myWarehouseIds, nameKh, qtyText, unitLabel,
 import { L } from "../../../i18n";
 import { usePortal } from "../../portal/portalContext";
 import SendTelegramButton from "../telegram/SendTelegram";
+import Select from "../../util/Select"; // searchable <select>
 
 const route = (d) => (
   <span className="sd-route">
@@ -117,6 +118,7 @@ function TransferComponent() {
   const config = {
     toolbarExtra: () => <SendTelegramButton reports={["pending_work"]} warehouseIds={portal ? [portal._id] : []} />,
     service: transferService,
+    printType: "transfer",
     docLabel: L("ផ្ទេរស្តុក", "Transfer"),
     createLabel: shop ? L("ស្នើសុំស្តុក", "Request stock") : L("ផ្ទេរស្តុកថ្មី", "New transfer"),
     canCreate: manage || shop,
@@ -136,21 +138,21 @@ function TransferComponent() {
         {!shop && (
           <div className="md-field">
             <label>{L("ពីឃ្លាំង", "From")}<span className="md-required">*</span></label>
-            <select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
+            <Select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
               {ctx.warehouses.map((w) => (
                 <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
         <div className="md-field">
           <label>{L("ទៅឃ្លាំង", "To")}<span className="md-required">*</span></label>
-          <select className="pe-input" value={form.to_warehouse_id || ""} onChange={(e) => set({ to_warehouse_id: e.target.value })} disabled={disabled}>
+          <Select className="pe-input" value={form.to_warehouse_id || ""} onChange={(e) => set({ to_warehouse_id: e.target.value })} disabled={disabled}>
             <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
             {ctx.warehouses.filter((w) => String(w._id) !== String(form.warehouse_id)).map((w) => (
               <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
             ))}
-          </select>
+          </Select>
         </div>
         {shop && <p className="sd-hint">{L("ស្នើសុំពីឃ្លាំងកណ្តាល។ ឃ្លាំងកណ្តាលអាចកែចំនួនមុនពេលបញ្ជូន។", "Requested from the central warehouse. Central may change the quantities before dispatch.")}</p>}
       </>

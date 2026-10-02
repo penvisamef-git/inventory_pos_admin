@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import { Plus, KeyRound, Lock, X, Power, Pencil } from "lucide-react";
 import { shopService } from "../../api/api.service";
 import { usePortal } from "./portalContext";
@@ -17,10 +17,13 @@ function PortalStaff() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const current = useRef(null); // warehouse shown now (ignore late answers for another one)
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setRows((await shopService.staff(w._id)).data || []);
+      const id = w._id;
+      current.current = id;
+      setRows((await shopService.staff(id, { onFresh: (res) => current.current === id && setRows(res.data || []) })).data || []);
     } catch (err) {
       setNotice({ type: "error", text: err.message });
     } finally {

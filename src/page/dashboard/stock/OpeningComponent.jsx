@@ -6,6 +6,7 @@ import { openingService, variantService } from "../../../api/api.service";
 import StockDocPage, { STATE_OPTIONS } from "./StockDocPage";
 import { canManageStock, nameKh, qtyText, usd } from "./stockOptions";
 import { L } from "../../../i18n";
+import Select from "../../util/Select"; // searchable <select>
 
 const COLS = ["SKU", "Name", "Unit", "Qty", "Unit cost (USD)", "Batch no", "Expiry (YYYY-MM-DD)"];
 
@@ -92,12 +93,12 @@ function ImportDialog({ api, onClose }) {
           <div className="md-fields md-fields-grid">
             <div className="md-field">
               <label>{L("ឃ្លាំង", "Warehouse")}<span className="md-required">*</span></label>
-              <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+              <Select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
                 <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
                 {api.ctx.warehouses.map((w) => (
                   <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="md-field">
               <label>{L("ឯកសារ Excel", "Excel file")}<span className="md-required">*</span></label>
@@ -127,6 +128,7 @@ function OpeningComponent() {
   const [importing, setImporting] = useState(null);
   const config = {
     service: openingService,
+    printType: "opening",
     docLabel: L("ស្តុកដើមគ្រា", "Opening stock"),
     createLabel: L("បញ្ចូលស្តុកដើមគ្រា", "New opening stock"),
     canCreate: manage,
@@ -134,12 +136,12 @@ function OpeningComponent() {
     Header: ({ form, set, ctx, disabled }) => (
       <div className="md-field">
         <label>{L("ឃ្លាំង", "Warehouse")}<span className="md-required">*</span></label>
-        <select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
+        <Select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
           <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
           {ctx.warehouses.map((w) => (
             <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
           ))}
-        </select>
+        </Select>
       </div>
     ),
     validate: (f) => (!f.warehouse_id ? L("សូមជ្រើសរើសឃ្លាំង", "Choose a warehouse") : null),

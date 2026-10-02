@@ -4,6 +4,7 @@ import MasterDataPage, { statusCell, dateTimeText } from "../master_data/MasterD
 import { telegramService } from "../../../api/api.service";
 import { DAYS, daysText, soon, nameOf, whLabel, langLabel, LANG_OPTIONS, TgBubble } from "./telegramOptions";
 import { L } from "../../../i18n";
+import Select from "../../util/Select"; // searchable <select>
 
 // rows editor works on objects → times ["08:00"] ⇄ [{ time: "08:00" }]; days are numbers in the API, strings in the chips
 const toForm = (row) => ({ ...row, times: (row.times || []).map((t) => ({ time: t })) });
@@ -60,20 +61,20 @@ function PreviewModal({ schedule, reports, onClose }) {
         </div>
         <div className="md-modal-body">
           <div className="tg-preview-bar">
-            <select className="md-filter" value={code} onChange={(e) => setCode(e.target.value)}>
+            <Select className="md-filter" value={code} onChange={(e) => setCode(e.target.value)}>
               {(schedule.report_codes || []).map((c) => (
                 <option key={c} value={c}>
                   {nameOf(reports.find((r) => r.code === c)) || c}
                 </option>
               ))}
-            </select>
-            <select className="md-filter" value={language} onChange={(e) => setLanguage(e.target.value)}>
+            </Select>
+            <Select className="md-filter" value={language} onChange={(e) => setLanguage(e.target.value)}>
               {LANG_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="tg-chat-bg">{loading ? <TgBubble empty={L("កំពុងផ្ទុក...", "Loading...")} /> : <TgBubble text={text} />}</div>
           {error && <div className="md-form-error">{error}</div>}

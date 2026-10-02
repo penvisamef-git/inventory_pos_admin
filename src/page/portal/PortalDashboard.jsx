@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useRef, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PackageSearch, AlertTriangle, CalendarClock, Truck, ClipboardPen, Users, ArrowRight, RefreshCw, ReceiptText, KeyRound } from "lucide-react";
 import { shopService } from "../../api/api.service";
@@ -12,10 +12,14 @@ function PortalDashboard() {
   const w = usePortal();
   const [d, setD] = useState(null);
   const [error, setError] = useState("");
+  const current = useRef(null); // warehouse shown now (ignore late answers for another one)
   const load = useCallback(async () => {
     setError("");
     try {
-      setD((await shopService.summary(w._id)).data);
+      // cached (api.client.js): last copy at once, quiet refresh
+      const id = w._id;
+      current.current = id;
+      setD((await shopService.summary(id, { onFresh: (res) => current.current === id && setD(res.data) })).data);
     } catch (err) {
       setError(err.message);
     }

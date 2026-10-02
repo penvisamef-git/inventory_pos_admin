@@ -21,7 +21,7 @@
   max-height: 340px;
   overflow: auto;
   padding: 6px;
-  border-radius: 14px;
+  border-radius: calc(14px * var(--ui-radius, 1));
   background: var(--color-background-card);
   border: 1px solid var(--md-border);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
@@ -41,7 +41,7 @@
   gap: 10px;
   padding: 8px 10px;
   border: none;
-  border-radius: 10px;
+  border-radius: calc(10px * var(--ui-radius, 1));
   background: transparent;
   color: var(--md-text);
   font: inherit;
@@ -220,7 +220,7 @@
   display: inline-block;
   margin: 2px 4px 2px 0;
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   font-size: 11.5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   background: var(--md-gold-soft);
@@ -256,7 +256,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px;
-  border-radius: 12px;
+  border-radius: calc(12px * var(--ui-radius, 1));
   background: var(--md-soft);
   color: var(--md-text);
   font-size: 13px;
@@ -275,7 +275,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 14px 16px;
-  border-radius: 18px;
+  border-radius: calc(18px * var(--ui-radius, 1));
   border: 1px solid transparent;
   background: var(--color-background-card);
   color: var(--md-text);
@@ -346,7 +346,7 @@ button.sb-card {
   border: none;
   background: none;
   padding: 3px 8px;
-  border-radius: 8px;
+  border-radius: calc(8px * var(--ui-radius, 1));
   font: inherit;
   font-weight: 700;
   font-size: 14px;
@@ -375,7 +375,7 @@ button.sb-card {
 .sm-type {
   display: inline-block;
   padding: 1px 9px;
-  border-radius: 999px;
+  border-radius: var(--ui-pill, 999px);
   font-size: 11.5px;
   font-weight: 600;
   white-space: nowrap;
@@ -430,4 +430,215 @@ button.sb-card {
   font-size: 12.5px;
   color: var(--md-muted);
   white-space: nowrap;
+}
+
+/* ---------- Stock count (StockCountComponent.jsx) ---------- */
+.sc-page {
+  gap: 14px;
+}
+
+.sc-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.sc-title {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 220px;
+}
+
+.sc-title b {
+  font-size: 17px;
+}
+
+.sc-title .md-sub {
+  flex-basis: 100%;
+}
+
+.sc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sc-danger {
+  color: var(--md-danger, #c0262d) !important;
+}
+
+.sc-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.sc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--md-border);
+  border-radius: calc(14px * var(--ui-radius, 1));
+  background: var(--color-background-paper, #fff);
+}
+
+.sc-stat span {
+  font-size: 12px;
+  color: var(--md-muted);
+}
+
+.sc-stat b {
+  font-size: 17px;
+  color: var(--md-text);
+}
+
+.sc-save b {
+  font-size: 14px;
+}
+
+.sc-bar {
+  height: 6px;
+  margin-top: 4px;
+  border-radius: var(--ui-pill, 999px);
+  background: var(--md-soft);
+  overflow: hidden;
+}
+
+.sc-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--md-primary);
+  transition: width 0.3s;
+}
+
+.sc-up,
+.sc-stat b.sc-up {
+  color: #0a7a3a;
+  font-weight: 700;
+}
+
+.sc-down,
+.sc-stat b.sc-down {
+  color: var(--md-danger, #c0262d);
+  font-weight: 700;
+}
+
+.sc-scan {
+  min-width: 300px;
+  border-color: var(--md-primary) !important;
+}
+
+.sc-tabs {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--md-border);
+  border-radius: calc(12px * var(--ui-radius, 1));
+}
+
+.sc-tabs button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: calc(9px * var(--ui-radius, 1));
+  background: transparent;
+  color: var(--md-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sc-tabs button.is-on {
+  background: var(--md-soft);
+  color: var(--md-text);
+  font-weight: 600;
+}
+
+.sc-table td {
+  vertical-align: middle;
+}
+
+.sc-name {
+  display: block;
+  font-weight: 600;
+}
+
+.sc-batch .md-sub {
+  display: block;
+}
+
+.sc-r {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.md-badge.sc-submitted {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.sc-table .sc-qty {
+  width: 110px !important;
+  min-width: 0;
+  text-align: right;
+  font-weight: 700;
+}
+
+.sc-qty.is-dirty {
+  border-color: #d68c00 !important;
+}
+
+.sc-flash td {
+  animation: sc-flash 1.6s ease-out;
+}
+
+@keyframes sc-flash {
+  0% {
+    background: rgba(214, 140, 0, 0.28);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.sc-added td:first-child {
+  box-shadow: inset 3px 0 0 #d68c00;
+}
+
+.sc-more {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+}
+
+.sc-open {
+  padding: 5px 12px !important;
+}
+
+.sc-intro {
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.sc-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: calc(12px * var(--ui-radius, 1));
+  background: var(--md-soft);
+}
+
+.sc-choice label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }

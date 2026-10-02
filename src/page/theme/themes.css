@@ -1,0 +1,71 @@
+/* ============================================================
+   Theme (skin) look tweaks — palettes / fonts / corner scale come from themes.js.
+   html[data-skin="forest|ocean|candy|navy"] + html[data-theme="light|dark"]
+   --ui-radius: corner scale (1 = forest) · --ui-pill: fully round controls (999px) or a theme's own corner
+============================================================ */
+
+/* ---------- Ocean: business look, flatter, crisp borders ---------- */
+:root[data-skin="ocean"] {
+  --ui-pill: 8px;
+}
+:root[data-skin="ocean"] .md-card,
+:root[data-skin="ocean"] .hm-card,
+:root[data-skin="ocean"] .sb-card {
+  border: 1px solid var(--color-border-light);
+}
+:root[data-skin="ocean"] .sidebar {
+  border-right: 1px solid var(--color-border-light);
+}
+
+/* ---------- Candy: playful, extra round, soft dotted canvas ---------- */
+:root[data-skin="candy"] .app {
+  background-image: radial-gradient(rgba(var(--color-primary-rgb), 0.09) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+:root[data-skin="candy"] .md-btn-primary,
+:root[data-skin="candy"] .btn-primary {
+  letter-spacing: 0.01em;
+  font-weight: 800;
+}
+
+/* ---------- Navy & gold: navy sidebar (light mode too), gold markers ---------- */
+:root[data-skin="navy"] {
+  --ui-pill: 10px;
+}
+:root[data-skin="navy"][data-theme="light"] .sidebar {
+  background: #13213a;
+  color: #dfe5ef;
+}
+:root[data-skin="navy"][data-theme="light"] .sidebar .brand-text strong {
+  color: #ffffff;
+}
+:root[data-skin="navy"][data-theme="light"] .sidebar .brand-text small,
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-label {
+  color: #8a96ab;
+}
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-item,
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-sub {
+  color: #b9c3d4;
+}
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-item:hover,
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-sub:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-item.active,
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-sub.active,
+:root[data-skin="navy"][data-theme="light"] .sidebar .nav-group.has-active > .nav-item {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+:root[data-skin="navy"] .sidebar .nav-item.active svg,
+:root[data-skin="navy"] .sidebar .nav-sub.active svg {
+  color: var(--color-gold-main);
+}
+:root[data-skin="navy"] .nav-item.active::before,
+:root[data-skin="navy"] .nav-sub.active::before {
+  background: var(--color-gold-main);
+}
+:root[data-skin="navy"] .side-card {
+  box-shadow: inset 0 0 0 1px rgba(232, 199, 122, 0.35);
+}

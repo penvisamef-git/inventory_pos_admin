@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Check, Circle, Store, Warehouse, Users, Wallet } from "lucide-react";
-import { exchangeRateService, openingService, paymentMethodService, productService, userService, warehouseService } from "../../../api/api.service";
+import { dashboardService } from "../../../api/api.service";
 import Auth from "../../util/auth";
 import { ACCESS, canAccess, scopeOf } from "../../util/permission";
 import KidsDecor from "../../decor/KidsDecor";
@@ -9,42 +9,56 @@ import "./home.style.css";
 
 import { L } from "../../../i18n";
 const riel = (v) => `${Number(v || 0).toLocaleString("en-US")} ៛`;
-const val = (r) => (r.status === "fulfilled" ? r.value : null);
+const EMPTY = { warehouses: [], users: null, rate: null, methods: [], products: 0, priced: false, opening: 0 };
+
+// Last summary: kept in memory (and this tab's sessionStorage) so coming back to the dashboard
+// shows the numbers at once; a fresh copy is loaded in the background and replaces it.
+const CACHE_KEY = "inventory_pos_dashboard";
+let memo = null;
+const readCache = (userId) => {
+  if (memo?.user === userId) return memo.data;
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null");
+    return saved?.user === userId ? saved.data : null;
+  } catch {
+    return null;
+  }
+};
+const writeCache = (userId, data) => {
+  memo = { user: userId, data };
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(memo));
+  } catch {
+    // storage blocked → memory only
+  }
+};
 
 // Dashboard home: real counts from the setup modules + a setup checklist.
 // Sales / stock cards come with Phase 2–4.
 function HomeComponent() {
   const login = new Auth().getClientLogin() || {};
   const isAdmin = canAccess(login, ACCESS.ADMIN);
-  const [data, setData] = useState({ warehouses: [], users: null, rate: null, methods: [], products: 0, priced: false, opening: 0 });
-  const [loading, setLoading] = useState(true);
+  const userId = login._id || login.email;
+  const cached = readCache(userId);
+  const [data, setData] = useState(cached || EMPTY);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
     let alive = true;
-    Promise.allSettled([
-      warehouseService.all(),
-      isAdmin ? userService.list({ limit: 1 }) : Promise.resolve(null),
-      exchangeRateService.current(),
-      paymentMethodService.all(),
-      productService.list({ limit: 1 }),
-      openingService.list({ limit: 1, state: "posted" }),
-    ]).then(([w, u, r, m, p, o]) => {
-      if (!alive) return;
-      setData({
-        warehouses: val(w)?.data || [],
-        users: val(u)?.pagination?.total ?? null,
-        rate: val(r)?.data || null,
-        methods: val(m)?.data || [],
-        products: val(p)?.pagination?.total || 0,
-        priced: !!val(p)?.data?.[0]?.price_range,
-        opening: val(o)?.pagination?.total || 0,
-      });
-      setLoading(false);
-    });
+    dashboardService
+      .summary()
+      .then((res) => {
+        if (!alive || !res?.data) return;
+        const d = { ...EMPTY, ...res.data, warehouses: res.data.warehouses || [], methods: res.data.methods || [] };
+        setData(d);
+        writeCache(userId, d);
+      })
+      .catch(() => {})
+      .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [isAdmin]);
+  }, [userId]);
 
   const shops = data.warehouses.filter((w) => w.type === "shop");
   const centrals = data.warehouses.filter((w) => w.type === "central");

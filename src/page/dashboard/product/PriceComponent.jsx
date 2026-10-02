@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { Search, X, Pencil, Save, History, Trash2, CalendarClock, Store, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { categoryService, priceService, productService, warehouseService } from "../../../api/api.service";
 import { dateTimeText, imageCell } from "../master_data/MasterDataPage";
@@ -7,6 +7,7 @@ import { L } from "../../../i18n";
 import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "./product.style.css";
+import Select from "../../util/Select"; // searchable <select>
 
 const usd = (v) => (v === null || v === undefined ? "-" : `$${Number(v).toFixed(2)}`);
 const valueName = (v) => L(v?.name_kh || v?.name_en, v?.name_en || v?.name_kh);
@@ -48,12 +49,19 @@ function PriceComponent() {
     return () => clearTimeout(t);
   }, [keyword]);
 
+  // cached pages (api.client.js): last copy at once, quiet refresh
+  const productSeq = useRef(0);
   const loadProducts = useCallback(async () => {
-    try {
-      const res = await productService.list({ page: pPage, limit: 12, sort: "sort_order", order: "asc", q: search || undefined, category_id: categoryId || undefined });
+    const seq = ++productSeq.current;
+    const apply = (res) => {
+      if (seq !== productSeq.current) return;
       setProducts(res.data || []);
       setPPages(Math.max(res.pagination?.totalPages || 1, 1));
       setSelected((cur) => cur || res.data?.[0] || null);
+    };
+    try {
+      const params = { page: pPage, limit: 12, sort: "sort_order", order: "asc", q: search || undefined, category_id: categoryId || undefined };
+      apply(await productService.list(params, { onFresh: apply }));
     } catch {
       setProducts([]);
     }
@@ -74,13 +82,15 @@ function PriceComponent() {
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState(null); // { variant, unit, rows }
 
+  const gridSeq = useRef(0);
   const loadGrid = useCallback(async () => {
     if (!selected) return;
+    const seq = ++gridSeq.current;
+    const apply = (res) => seq === gridSeq.current && setGrid(res.data || []);
     setLoading(true);
     setError("");
     try {
-      const res = await priceService.current({ product_id: selected._id, warehouse_id: mode || undefined, limit: 200 });
-      setGrid(res.data || []);
+      apply(await priceService.current({ product_id: selected._id, warehouse_id: mode || undefined, limit: 200 }, { onFresh: apply }));
     } catch (err) {
       setError(err.message);
       setGrid([]);
@@ -246,12 +256,12 @@ function PriceComponent() {
                 </button>
               )}
             </div>
-            <select className="md-filter" value={categoryId} onChange={(e) => { setPPage(1); setCategoryId(e.target.value); }}>
+            <Select className="md-filter" value={categoryId} onChange={(e) => { setPPage(1); setCategoryId(e.target.value); }}>
               <option value="">{L("-- ប្រភេទទាំងអស់ --", "-- All categories --")}</option>
               {categories.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="pc-product-list">
             {products.map((p) => {

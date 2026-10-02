@@ -3,12 +3,14 @@ import { receiveService, supplierService } from "../../../api/api.service";
 import StockDocPage, { STATE_OPTIONS } from "./StockDocPage";
 import { canManageStock, nameKh, usd } from "./stockOptions";
 import { L } from "../../../i18n";
+import Select from "../../util/Select"; // searchable <select>
 
 // Goods from a supplier into the central warehouse (agreed: central only)
 function ReceiveComponent() {
   const manage = canManageStock();
   const config = {
     service: receiveService,
+    printType: "receive",
     docLabel: L("ទទួលទំនិញ", "Goods receive"),
     createLabel: L("ទទួលទំនិញថ្មី", "New goods receive"),
     canCreate: manage,
@@ -18,20 +20,20 @@ function ReceiveComponent() {
       <>
         <div className="md-field">
           <label>{L("ឃ្លាំងកណ្តាល", "Central warehouse")}<span className="md-required">*</span></label>
-          <select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
+          <Select className="pe-input" value={form.warehouse_id || ""} onChange={(e) => set({ warehouse_id: e.target.value })} disabled={disabled}>
             {ctx.warehouses.filter((w) => w.type === "central").map((w) => (
               <option key={w._id} value={w._id}>{nameKh(w)} ({w.code})</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="md-field">
           <label>{L("អ្នកផ្គត់ផ្គង់", "Supplier")}<span className="md-required">*</span></label>
-          <select className="pe-input" value={form.supplier_id || ""} onChange={(e) => set({ supplier_id: e.target.value })} disabled={disabled}>
+          <Select className="pe-input" value={form.supplier_id || ""} onChange={(e) => set({ supplier_id: e.target.value })} disabled={disabled}>
             <option value="">{L("-- ជ្រើសរើស --", "-- Choose --")}</option>
             {(ctx.suppliers || []).map((s) => (
               <option key={s._id} value={s._id}>{s.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="md-field">
           <label>{L("លេខវិក្កយបត្រអ្នកផ្គត់ផ្គង់", "Supplier invoice no")}</label>

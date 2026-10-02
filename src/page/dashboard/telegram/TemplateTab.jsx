@@ -166,7 +166,7 @@ function TemplateTab() {
                   <span className="md-sub">
                     <span className="md-code">{r.code}</span>
                     {r.custom && <span className="md-badge md-badge-gold">{L("បានកែ", "Edited")}</span>}
-                    {r.phase >= 3 && <span className="md-badge md-badge-off">{L("POS ឆាប់ៗ", "POS, coming")}</span>}
+                    {r.phase >= 4 && <span className="md-badge md-badge-off">{L("POS ឆាប់ៗ", "POS, coming")}</span>}
                   </span>
                 </div>
                 <div className="tg-tpl-text">

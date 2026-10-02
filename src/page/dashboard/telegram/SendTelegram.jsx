@@ -112,7 +112,7 @@ export function SendTelegramDialog({ reports = [], warehouseIds = [], categoryId
     }
   };
 
-  const reportList = useMemo(() => (targets?.reports || []).filter((r) => r.phase < 3), [targets]);
+  const reportList = useMemo(() => (targets?.reports || []).filter((r) => r.phase < 4), [targets]);
   const canSend = chatIds.length > 0 && (codes.length > 0 || text.trim()) && !sending && !done?.ok;
 
   return (

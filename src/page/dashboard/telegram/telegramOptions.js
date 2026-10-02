@@ -39,8 +39,8 @@ export const daysText = (days = []) => {
   return DAYS.filter((d) => set.has(d.value)).map((d) => d.label).join(", ") || "-";
 };
 
-// phase 3 = POS (not built yet) → still selectable, marked "soon"
-export const soon = (phase) => (phase >= 3 ? L(" · (POS ឆាប់ៗ)", " · (POS, coming)") : "");
+// phase 4+ = not built yet → still selectable, marked "soon" (POS events / reports work since phase 3)
+export const soon = (phase) => (phase >= 4 ? L(" · (ឆាប់ៗ)", " · (coming)") : "");
 export const nameOf = (row) => L(row?.name_kh || row?.name_en, row?.name_en || row?.name_kh);
 
 export const whLabel = (w) => (w ? `${w.code} · ${L(w.name_kh || w.name_en, w.name_en || w.name_kh)}` : "");

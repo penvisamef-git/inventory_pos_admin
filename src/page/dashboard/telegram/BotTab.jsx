@@ -68,7 +68,8 @@ const service = {
   },
 };
 
-const ALL_STOCK_EVENTS = (events) => events.filter((e) => e.phase < 3).map((e) => e.code);
+// default events for a new chat: everything except "every sale" (too many messages; tick it when wanted)
+const ALL_STOCK_EVENTS = (events) => events.filter((e) => e.phase < 4 && e.code !== "pos_sale").map((e) => e.code);
 
 // "Find chats": groups / people that wrote to the bot recently → add in one click
 function FindChatsModal({ bot, events, onClose, onAdded }) {

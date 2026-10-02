@@ -41,6 +41,7 @@ Access levels per screen: `ACCESS.ALL | MASTER | PRODUCT | VIEW_ALL | ADMIN` (`s
 | ស្តុក (Stock): on hand, transfers, goods receive, adjustments, stock count, near expiry, movements, opening stock | `/stock/...` | view: web roles (goods receive: central roles) · shop manager: own shop, request / receive transfers, draft adjustments |
 | ការទិញ (Purchase): suppliers | `/purchase/supplier` | edit: admin, central manager |
 | Telegram: bots, groups / chats, scheduled reports, message text, sent messages | `/telegram#bot` … `#message` | admin |
+| ម៉ាស៊ីន POS (POS devices, in CONNECT): POS computers per shop, pairing code, on / off, re-pair | `/pos-device` | admin, central manager |
 | កូដ QR (QR Code, in CONNECT): public catalog links per shop / warehouse | `/qr` | admin, central manager |
 | Public catalog (customers, **no login**) | `/c/:token` | anyone with the link |
 | កំណត់ចំណាំ (Notes, in OTHER) | `/note` (+ Shop portal tab) | everyone: own notes · super admin: everyone's, can edit |
@@ -55,6 +56,8 @@ Stock documents share `page/dashboard/stock/StockDocPage.jsx` (list + editor + d
 
 **Stock count** — `stock/StockCountComponent.jsx` (`/stock/count`, portal tab *Stock count*): *Start a count* (warehouse + optional category) → counting screen: scan a barcode / type a SKU + Enter = +1 (batch items: jumps to the batch lines), type quantities, filter *Not counted / Counted*, *Add item* for things not on the list; saves by itself 2–3 s after typing. *Submit* (not counted: skip or count as 0) → review with System / Counted / Difference (+ value for central) → central *Post to stock* (one `stock_count` adjustment) or *Reopen*. **Blind**: nobody sees the system qty while counting.
 
+**POS devices** — `page/dashboard/pos/PosDeviceComponent.jsx` (`/pos-device`): one card per POS computer, grouped by shop. *Add POS* (shop + name) shows a big 6-digit **pairing code** (30 min) to type on that computer; paired cards show online / offline, last seen, last pull / push and the app version. *Re-pair* makes a new code and unlinks the old one at once; the switch turns a POS off (it can't sync). The POS app itself is `../local_pos` + `../local_pos_api`.
+
 **QR code / public catalog** — `page/dashboard/qr/QrCodeComponent.jsx` (`/qr`): make a link for a shop or warehouse (optionally one category) → card with the QR, on / off switch, views, *Copy link*, *Open*, *New link* (old QR stops), delete. Click the QR for a big one, **QR .png** (1024 px) or an **A4 poster** (Khmer + English "scan to see our items", shop name, link). The link is `<this website>/c/<token>` (or `REACT_APP_CATALOG_URL` + `/c/<token>` when the catalog gets its own domain).
 
 The customer page `page/catalog/CatalogPage.jsx` (`/c/:token`, outside the login): shop header (logo, name, phone, address), search, category chips, *In stock only*, product cards (picture, brand, price or range, colour dots / sizes, status *In stock / Few left / Out of stock*), tap → item sheet with every option, its price and status, *Call the shop*. Khmer / English switch of its own, more items load while scrolling, always light, accent colour = the system theme. Never shows quantities or cost.
@@ -67,7 +70,7 @@ Telegram (`page/dashboard/telegram/`, one page with 5 tabs): **Bots** — add wi
 
 **Send to Telegram (one click)** — `telegram/SendTelegram.jsx` (`SendTelegramButton`), admin + central manager only: a *Telegram* button on Stock on hand (low stock or summary, with the current warehouse / category filter), Near expiry (with the chosen days), Transfers and Adjustments (pending work) and the Telegram page. The box ticks the right report and shops, remembers the last groups (this browser), shows a live preview, takes an optional own message, and sends at once through the bot.
 
-Phase 1 (master data) and Phase 2 (stock) are complete. Next: Phase 3 — POS.
+Phase 1 (master data) and Phase 2 (stock) are complete. Phase 3 (POS) has started: POS devices here, the shop app in `local_pos` / `local_pos_api`.
 
 ## Shop portal — `/shop/:code/...`
 

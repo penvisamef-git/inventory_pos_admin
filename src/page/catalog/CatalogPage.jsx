@@ -37,6 +37,10 @@ const STATUS = {
   out: ["អស់ស្តុក", "Out of stock"],
 };
 
+
+
+
+
 function StatusPill({ status, t, small }) {
   const [kh, en] = STATUS[status] || STATUS.out;
   return <span className={`ct-pill ct-${status} ${small ? "ct-pill-sm" : ""}`}><i />{t(kh, en)}</span>;

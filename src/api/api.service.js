@@ -233,6 +233,25 @@ export const noteService = {
   remove: (id) => apiClient.delete(`/note/${id}`),
 };
 
+// POS computers (admin, central manager): pairing code, on/off, re-pair · sales received from POS
+export const posDeviceService = {
+  list: (params) => apiClient.get("/pos/device", params),
+  create: (data) => apiClient.post("/pos/device", data),
+  update: (id, data) => apiClient.put(`/pos/device/${id}`, data),
+  newCode: (id) => apiClient.put(`/pos/device/pair-code/${id}`),
+  remove: (id) => apiClient.delete(`/pos/device/${id}`),
+  sales: (params, opts) => apiClient.get("/pos/sale", params, opts),
+};
+
+// Sales from the POS: invoices, report, cash shifts (admin / central / accountant: all shops + cost; shop manager: own shops)
+export const saleService = {
+  list: (params, opts) => apiClient.get("/sale", params, opts),
+  get: (id) => apiClient.get(`/sale/${encodeURIComponent(id)}`),
+  report: (params, opts) => apiClient.get("/sale/report", params, opts),
+  shifts: (params, opts) => apiClient.get("/sale/shift", params, opts),
+  filters: (params) => apiClient.get("/sale/filters", params),
+};
+
 export const searchService = {
   query: (q) => apiClient.get("/search", { q }),
 };

@@ -1,6 +1,6 @@
 import lazyPage from "./lazyPage";
 import { ACCESS } from "../page/util/permission";
-import { LayoutDashboard, Users, History, User, Settings2, Warehouse, SlidersHorizontal, ArrowRightLeft, Wallet, Package, Ruler, FolderTree, Palette, Shirt, BadgeCheck, Tag, Boxes, PackageSearch, CalendarClock, Truck, PackagePlus, ClipboardPen, ArchiveRestore, ListOrdered, Factory, Send, ClipboardCheck, QrCode, StickyNote } from "lucide-react";
+import { LayoutDashboard, Users, History, User, Settings2, Warehouse, SlidersHorizontal, ArrowRightLeft, Wallet, Package, Ruler, FolderTree, Palette, Shirt, BadgeCheck, Tag, Boxes, PackageSearch, CalendarClock, Truck, PackagePlus, ClipboardPen, ArchiveRestore, ListOrdered, Factory, Send, ClipboardCheck, QrCode, StickyNote, MonitorSmartphone, ReceiptText } from "lucide-react";
 
 import { L } from "../i18n";
 
@@ -28,6 +28,8 @@ const AdjustmentComponent = lazyPage(() => import("../page/dashboard/stock/Adjus
 const StockCountComponent = lazyPage(() => import("../page/dashboard/stock/StockCountComponent"));
 const OpeningComponent = lazyPage(() => import("../page/dashboard/stock/OpeningComponent"));
 const SupplierComponent = lazyPage(() => import("../page/dashboard/purchase/SupplierComponent"));
+const SalesPage = lazyPage(() => import("../page/dashboard/sale/SalesPage"));
+const PosDeviceComponent = lazyPage(() => import("../page/dashboard/pos/PosDeviceComponent"));
 const QrCodeComponent = lazyPage(() => import("../page/dashboard/qr/QrCodeComponent"));
 const NoteComponent = lazyPage(() => import("../page/dashboard/note/NoteComponent"));
 const TelegramComponent = lazyPage(() => import("../page/dashboard/telegram/TelegramComponent"));
@@ -53,6 +55,21 @@ class RouteScript {
           { name: L("ទំព័រដើម", "Home"), url: null },
           { name: L("ទិន្នន័យសង្ខេប", "Dashboard"), url: null },
         ],
+        child: [],
+      },
+      {
+        // ---------------- Sales (from the POS) ----------------
+        is_show_sidebar: true,
+        section: "menu",
+        is_can_access_route: true,
+        name: L("ការលក់", "Sales"),
+        icon: <ReceiptText />,
+        component: <SalesPage />,
+        url: "sales",
+        subtitle: L("វិក្កយបត្រពី POS របាយការណ៍លក់ និងវេនលុយ", "Invoices from the POS, sales report and cash shifts"),
+        access: ACCESS.VIEW_ALL,
+        type: "index",
+        breadcrumb: [{ name: L("ការលក់", "Sales"), url: null }],
         child: [],
       },
       {
@@ -427,6 +444,20 @@ class RouteScript {
         access: ACCESS.ADMIN,
         type: "index",
         breadcrumb: [{ name: L("តេឡេក្រាម", "Telegram"), url: null }],
+        child: [],
+      },
+      {
+        is_show_sidebar: true,
+        section: "connect",
+        is_can_access_route: true,
+        name: L("ម៉ាស៊ីន POS", "POS devices"),
+        icon: <MonitorSmartphone />,
+        component: <PosDeviceComponent />,
+        url: "pos-device",
+        subtitle: L("កុំព្យូទ័រលក់នៅហាង — ភ្ជាប់ដោយលេខកូដ 6 ខ្ទង់", "Sales computers in the shops — link them with a 6-digit code"),
+        access: ACCESS.PRODUCT,
+        type: "index",
+        breadcrumb: [{ name: L("ម៉ាស៊ីន POS", "POS devices"), url: null }],
         child: [],
       },
       {

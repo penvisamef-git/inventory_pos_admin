@@ -21,6 +21,7 @@ const StockCountComponent = lazyPage(() => import("../page/dashboard/stock/Stock
 const MovementComponent = lazyPage(() => import("../page/dashboard/stock/MovementComponent"));
 const AccountPage = lazyPage(() => import("../page/dashboard/account/AccountPage"));
 const ActivityLogComponent = lazyPage(() => import("../page/dashboard/log/ActivityLogComponent"));
+const SalesPage = lazyPage(() => import("../page/dashboard/sale/SalesPage"));
 const NoteComponent = lazyPage(() => import("../page/dashboard/note/NoteComponent"));
 const PrintDoc = lazyPage(() => import("../page/print/PrintDoc"));
 const CatalogPage = lazyPage(() => import("../page/catalog/CatalogPage"));
@@ -78,6 +79,7 @@ function RouteComponent() {
       page("count", <StockCountComponent />),
       page("expiry", <ExpiryComponent />),
       page("movement", <MovementComponent />),
+      page("sales", <SalesPage />),
       page("log", <ActivityLogComponent />),
       page("note", <NoteComponent />),
       page("staff", <PortalStaff />),

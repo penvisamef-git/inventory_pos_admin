@@ -89,7 +89,7 @@ function ChatTab({ meta, bots, warehouses, reload, go }) {
       label: L("ព្រឹត្តិការណ៍ដែលផ្ញើមកក្រុមនេះ", "Events sent to this chat"),
       type: "multiselect",
       options: eventOptions,
-      default: events.filter((e) => e.phase < 3).map((e) => e.code),
+      default: events.filter((e) => e.phase < 4 && e.code !== "pos_sale").map((e) => e.code), // "every sale" only when ticked
     },
     { key: "note", label: L("កំណត់សម្គាល់", "Note"), type: "textarea", full: true },
   ];

@@ -25,11 +25,11 @@ export const PORTAL_PAGES = [
   { url: "adjustment", icon: ClipboardPen, name: L("កែតម្រូវ", "Adjustments") },
   { url: "count", icon: ClipboardCheck, name: L("រាប់ស្តុក", "Stock count") },
   { url: "expiry", icon: CalendarClock, name: L("ជិតផុតកំណត់", "Near expiry") },
+  { url: "sales", icon: ReceiptText, name: L("ការលក់", "Sales") },
   { url: "movement", icon: ListOrdered, name: L("ចលនាស្តុក", "Movements") },
   { url: "log", icon: History, name: L("កំណត់ត្រាសកម្មភាព", "Activity log") },
   { url: "note", icon: StickyNote, name: L("កំណត់ចំណាំ", "Notes") },
   { url: "staff", icon: Users, name: L("បុគ្គលិក", "Staff"), shopOnly: true },
-  { url: "sales", icon: ReceiptText, name: L("ការលក់", "Sales"), soon: true },
 ];
 
 /**

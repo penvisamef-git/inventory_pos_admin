@@ -3,8 +3,23 @@ import MasterDataPage, { statusCell } from "../master_data/MasterDataPage";
 import { userService, warehouseService } from "../../../api/api.service";
 import { WAREHOUSE_TYPE_OPTIONS, canEditSetup, labelOf, nameKh, nameOther } from "./setupOptions";
 
+import { Eye, MapPin, Package, Phone, Store, UserRound, Warehouse } from "lucide-react";
+import WarehouseStockDialog from "./WarehouseStockDialog";
 import { L } from "../../../i18n";
 const fullName = (u) => (u ? `${u.firstname || ""} ${u.lastname || ""}`.trim() || u.email : "");
+
+const stockText = (row) =>
+  row.stock?.skus || row.stock?.negative ? (
+    <>
+      <b>{L(`${row.stock.skus} មុខ`, `${row.stock.skus} items`)}</b>
+      <span className="md-sub">
+        {L("សរុប", "Total")} {Number(row.stock.qty || 0).toLocaleString("en-US")}
+        {row.stock.negative ? <span className="wh-neg"> · {L(`${row.stock.negative} ក្រោម 0`, `${row.stock.negative} below 0`)}</span> : null}
+      </span>
+    </>
+  ) : (
+    <span className="md-sub">{L("ទទេ", "Empty")}</span>
+  );
 
 const COLUMNS = [
   {
@@ -33,6 +48,11 @@ const COLUMNS = [
       </>
     ),
   },
+  {
+    key: "stock",
+    label: L("ស្តុក", "Stock"),
+    render: (row) => stockText(row),
+  },
   { key: "manager", label: L("អ្នកគ្រប់គ្រង", "Manager"), render: (row) => fullName(row.manager_id) || "-" },
   {
     key: "allow_negative_stock",
@@ -43,12 +63,54 @@ const COLUMNS = [
   { key: "status", label: L("ស្ថានភាព", "Status"), render: statusCell },
 ];
 
+// Grid card: a big icon for the level — central warehouse (supplies the shops) or shop (POS)
+function WarehouseCard(row, onOpen) {
+  const central = row.type === "central";
+  const Icon = central ? Warehouse : Store;
+  return (
+    <div className={`wh-card ${row.type}`}>
+      <div className="wh-card-top">
+        <span className="wh-card-icon"><Icon size={30} strokeWidth={1.8} /></span>
+        <div className="wh-card-title">
+          <span className={`md-badge md-badge-${row.type}`}>{labelOf(WAREHOUSE_TYPE_OPTIONS, row.type)}</span>
+          <b>{nameKh(row)}</b>
+          {nameOther(row) && <span className="md-sub">{nameOther(row)}</span>}
+        </div>
+        <span className="md-code">{row.code}</span>
+      </div>
+      <button type="button" className={`wh-card-stock ${row.stock?.skus ? "" : "empty"}`} onClick={() => onOpen(row)} title={L("មើលទំនិញក្នុងឃ្លាំង", "See the items inside")}>
+        <Package size={16} />
+        {row.stock?.skus ? (
+          <span>
+            <b>{L(`${row.stock.skus} មុខ`, `${row.stock.skus} items`)}</b> · {L("សរុប", "total")} {Number(row.stock.qty || 0).toLocaleString("en-US")}
+            {row.stock.negative ? <em> · {L(`${row.stock.negative} ក្រោម 0`, `${row.stock.negative} below 0`)}</em> : null}
+          </span>
+        ) : (
+          <span>{L("មិនទាន់មានស្តុក", "No stock yet")}</span>
+        )}
+        <Eye size={15} className="wh-card-eye" />
+      </button>
+      <ul className="wh-card-info">
+        <li><UserRound size={14} /> {fullName(row.manager_id) || <em>{L("គ្មានអ្នកគ្រប់គ្រង", "No manager")}</em>}</li>
+        <li><Phone size={14} /> {row.phone || <em>-</em>}</li>
+        <li><MapPin size={14} /> {row.address || <em>-</em>}</li>
+      </ul>
+      <div className="wh-card-foot">
+        {statusCell(row)}
+        {row.type === "shop" &&
+          (row.allow_negative_stock ? <span className="md-badge md-badge-gold">{L("លក់ពេលស្តុក 0", "Sells at 0 stock")}</span> : <span className="md-badge md-badge-off">{L("មិនលក់ពេលស្តុក 0", "No sale at 0 stock")}</span>)}
+      </div>
+    </div>
+  );
+}
+
 const SEARCH_KEYS = ["code", "name_kh", "name_en", "phone", "address"];
 const FILTERS = [{ key: "type", label: L("-- ប្រភេទទាំងអស់ --", "-- All types --"), options: WAREHOUSE_TYPE_OPTIONS }];
 const LIST_PARAMS = { sort: "sort_order", order: "asc" };
 
 function WarehouseComponent() {
   const canEdit = canEditSetup();
+  const [viewing, setViewing] = useState(null);
   const [users, setUsers] = useState([]);
 
   // manager dropdown (only admins edit, and only admins may read the user list)
@@ -102,6 +164,7 @@ function WarehouseComponent() {
   );
 
   return (
+    <>
     <MasterDataPage
       title={L("ឃ្លាំង / ហាង", "Warehouses / Shops")}
       service={warehouseService}
@@ -113,7 +176,18 @@ function WarehouseComponent() {
       canEdit={canEdit}
       getName={(row) => `${nameKh(row)} (${row.code})`}
       wide
+      gridCard={(row) => WarehouseCard(row, setViewing)}
+      viewKey="warehouse"
+      extraActions={(row) => (
+        <button type="button" className="md-icon-btn" onClick={() => setViewing(row)} title={L("មើលស្តុក", "View stock")}>
+          <Eye size={15} />
+        </button>
+      )}
+      // still holds stock → can't be deleted (the API checks too)
+      canDelete={(row) => !(row.stock?.skus || row.stock?.negative)}
     />
+    {viewing && <WarehouseStockDialog warehouse={viewing} onClose={() => setViewing(null)} />}
+    </>
   );
 }
 

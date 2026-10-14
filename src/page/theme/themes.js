@@ -5,10 +5,21 @@
 //
 // A theme = palette (CSS variables --color-<group>-<key>) + shape (--ui-radius scale)
 //         + fonts (--font-*) + a few look tweaks in themes.css ([data-skin="…"]).
-// Add a theme: copy one block below, change the values, add its key to UI_THEMES
+// Add a theme: add a seed in themeSeeds.js (or copy one block below), add its key to UI_THEMES
 // in inventory_pos_api/src/v1/admin/setup/setting/setting.model.js.
 // ============================================================
 import { themeColors, darkColors } from "./default/color.script.palette";
+import { SKIN_SEEDS } from "./themeSeeds";
+
+// ---------- colour helpers (for the themes made from seeds) ----------
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const toHex = (rgb) => "#" + rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+export const mix = (a, b, t) => {
+  const x = hexRgb(a);
+  const y = hexRgb(b);
+  return toHex(x.map((v, i) => v + (y[i] - v) * t));
+};
+const rgbText = (h) => hexRgb(h).join(", ");
 
 // helper: the same structure for every palette (keys must match color.script.palette.js)
 const palette = ({ p, accent, bg, text, border, shadow, gradient, dark }) => ({
@@ -36,6 +47,54 @@ const palette = ({ p, accent, bg, text, border, shadow, gradient, dark }) => ({
   shadow,
 });
 
+// A full theme (light + dark palettes) from a seed in themeSeeds.js
+function fromSeed(sd) {
+  const { p, a } = sd;
+  const ink = mix("#1a1d21", p, 0.12);
+  const deep = mix(p, "#000000", 0.55);
+  const light = palette({
+    p: { main: p, light: mix(p, "#ffffff", 0.25), dark: mix(p, "#000000", 0.3), deep, soft: mix(p, "#ffffff", 0.9), mint: mix(p, "#ffffff", 0.62), rgb: rgbText(p), hover: mix(p, "#ffffff", 0.93) },
+    accent: { main: a, light: mix(a, "#ffffff", 0.45), bright: mix(a, "#ffffff", 0.2), soft: mix(a, "#ffffff", 0.9), text: ink },
+    bg: { app: mix("#eceeef", p, 0.06), sidebar: mix("#f8f9f9", p, 0.03), main: mix("#f8f9f9", p, 0.03), card: "#ffffff", soft: mix("#f4f5f6", p, 0.04), input: "#ffffff", overlay: `rgba(${rgbText(deep)}, 0.45)` },
+    text: { primary: ink, secondary: mix("#646b72", p, 0.12), dark: ink, light: mix("#8c939a", p, 0.1), white: "#ffffff", muted: mix("#9ba2a9", p, 0.1), cream: "#ffffff" },
+    border: { light: mix("#e5e7ea", p, 0.06), strong: mix("#d3d7dc", p, 0.09) },
+    gradient: {
+      primary: `linear-gradient(135deg, ${mix(p, "#ffffff", 0.2)} 0%, ${p} 45%, ${deep} 100%)`,
+      button: `linear-gradient(180deg, ${mix(p, "#ffffff", 0.1)} 0%, ${mix(p, "#000000", 0.3)} 100%)`,
+    },
+    shadow: { default: `rgba(${rgbText(deep)}, 0.09)`, light: `rgba(${rgbText(deep)}, 0.05)` },
+  });
+  const pd = sd.family === "gray" ? mix(a, "#ffffff", 0.1) : mix(p, "#ffffff", 0.28); // dark mode main (charcoal → its accent)
+  const dark = palette({
+    dark: true,
+    p: { main: pd, light: mix(pd, "#ffffff", 0.3), dark: mix(pd, "#ffffff", 0.55), deep, soft: mix(pd, "#0b0e12", 0.78), mint: mix(pd, "#ffffff", 0.55), rgb: rgbText(pd), hover: mix(pd, "#0b0e12", 0.86) },
+    accent: { main: a, light: mix(a, "#ffffff", 0.4), bright: mix(a, "#ffffff", 0.2), soft: mix(a, "#0b0e12", 0.8), text: "#eef1f4" },
+    bg: { app: mix("#07090c", p, 0.05), sidebar: mix("#0d1116", p, 0.06), main: mix("#0d1116", p, 0.06), card: mix("#141a21", p, 0.07), soft: mix("#19212a", p, 0.08), input: mix("#10151b", p, 0.06), overlay: "rgba(0, 0, 0, 0.6)" },
+    text: { primary: mix("#e8ecf0", pd, 0.06), secondary: mix("#a3adb8", pd, 0.08), dark: mix("#e8ecf0", pd, 0.06), light: "#7e8894", white: "#ffffff", muted: "#6d7783", cream: "#ffffff" },
+    border: { light: mix("#222b36", p, 0.08), strong: mix("#2e3946", p, 0.1) },
+    gradient: {
+      primary: `linear-gradient(135deg, ${mix(p, "#000000", 0.1)} 0%, ${mix(p, "#000000", 0.35)} 50%, ${mix(p, "#000000", 0.7)} 100%)`,
+      button: `linear-gradient(180deg, ${pd} 0%, ${mix(pd, "#000000", 0.3)} 100%)`,
+    },
+    shadow: { default: "rgba(0, 0, 0, 0.38)", light: "rgba(0, 0, 0, 0.22)" },
+  });
+  return {
+    key: sd.key,
+    name_kh: sd.kh,
+    name_en: sd.en,
+    desc_kh: sd.dkh,
+    desc_en: sd.den,
+    fontName: sd.font,
+    fontUrl: `https://fonts.googleapis.com/css2?family=${sd.font.replace(/ /g, "+")}:wght@${sd.w}&display=swap`,
+    radius: sd.radius,
+    look: sd.look,
+    family: sd.family,
+    sideDark: mix(p, "#0b0e14", 0.82), // sidebar colour of the "dark" look (light mode)
+    light,
+    dark,
+  };
+}
+
 export const SKINS = {
   // ---------------- Forest (original) ----------------
   forest: {
@@ -47,6 +106,8 @@ export const SKINS = {
     fontName: "Plus Jakarta Sans",
     fontUrl: null, // already in index.css
     radius: 1,
+    look: "soft",
+    family: "green",
     light: themeColors,
     dark: darkColors,
   },
@@ -61,6 +122,8 @@ export const SKINS = {
     fontName: "Inter",
     fontUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap",
     radius: 0.55,
+    look: "flat",
+    family: "blue",
     light: palette({
       p: { main: "#1d64d8", light: "#4c8df0", dark: "#1748a6", deep: "#0f2f6b", soft: "#e8f0fd", mint: "#bcd5fa", rgb: "29, 100, 216", hover: "#edf3fd" },
       accent: { main: "#f59e0b", light: "#fcd34d", bright: "#fbbf24", soft: "#fff6e5", text: "#172033" },
@@ -98,6 +161,8 @@ export const SKINS = {
     fontName: "Nunito",
     fontUrl: "https://fonts.googleapis.com/css2?family=Nunito:wght@400..800&display=swap",
     radius: 1.35,
+    look: "playful",
+    family: "pink",
     light: palette({
       p: { main: "#c2417f", light: "#e070a8", dark: "#8f2b5c", deep: "#5a1a3b", soft: "#fdeaf3", mint: "#f7c3dc", rgb: "194, 65, 127", hover: "#fbeff5" },
       accent: { main: "#8b5cf6", light: "#c4b5fd", bright: "#a78bfa", soft: "#f1ecff", text: "#2a1f2b" },
@@ -135,6 +200,9 @@ export const SKINS = {
     fontName: "Manrope",
     fontUrl: "https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&display=swap",
     radius: 0.7,
+    look: "dark",
+    family: "blue",
+    sideDark: "#13213a",
     light: palette({
       p: { main: "#1f3a63", light: "#3b5f93", dark: "#132843", deep: "#0b1a2e", soft: "#e9eef5", mint: "#e8c77a", rgb: "31, 58, 99", hover: "#eef2f7" },
       accent: { main: "#c9962b", light: "#e8c77a", bright: "#d9a93c", soft: "#fbf3e2", text: "#16202e" },
@@ -162,6 +230,10 @@ export const SKINS = {
     }),
   },
 };
+
+SKIN_SEEDS.forEach((sd) => {
+  SKINS[sd.key] = fromSeed(sd);
+});
 
 export const SKIN_LIST = Object.values(SKINS);
 export const DEFAULT_SKIN = "forest";

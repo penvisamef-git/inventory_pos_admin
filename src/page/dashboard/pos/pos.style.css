@@ -140,3 +140,32 @@
   gap: 8px;
   margin-top: auto;
 }
+
+/* local / cloud POS */
+.pdv-kind {
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 2px 9px;
+  border-radius: var(--ui-pill, 999px);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pdv-kind.cloud,
+.pdv-icon.cloud {
+  background: #e8f1fd;
+  color: #1d64d8;
+}
+
+:root[data-theme="dark"] .pdv-kind.cloud,
+:root[data-theme="dark"] .pdv-icon.cloud {
+  background: rgba(76, 141, 240, 0.16);
+  color: #8fb6f5;
+}
+
+.pdv-kind-hint {
+  margin: 12px 0 0;
+  line-height: 1.5;
+}

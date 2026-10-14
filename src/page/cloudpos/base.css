@@ -1,0 +1,102 @@
+/* Cloud POS base (was local_pos/src/index.css) — only while the POS page is open (body.cpos-body).
+   Fonts: the admin web's Plus Jakarta Sans + Kantumruy Pro (cached by the service worker for offline). */
+:root {
+  --pos-font: "Plus Jakarta Sans", "Kantumruy Pro", "Khmer OS Siem Reap", system-ui, sans-serif;
+  --pos-green: #1f7a4d;
+  --pos-green-dark: #14532d;
+  --pos-green-soft: #e7f3ec;
+  --pos-gold: #f59e0b;
+  --pos-gold-soft: #fff4dd;
+  --pos-red: #c0262d;
+  --pos-bg: #eef1ef;
+  --pos-panel: #ffffff;
+  --pos-line: #e3e8e5;
+  --pos-text: #18221d;
+  --pos-muted: #66706b;
+  --pos-radius: 16px;
+  --pos-green-light: #2a8a57;
+  --pos-mint: #b9dcc8;
+  --pos-rgb: 31, 122, 77;
+  --pos-gold-rgb: 245, 158, 11;
+  --pos-gold-line: #e7b766;
+  --pos-gold-text: #8a5a00;
+  --pos-gold-bright: #ffd27a;
+  --pos-soft: #fafbfa;
+  --pos-soft2: #f3f6f4;
+  --pos-on-dark: #d4f5e2;
+  --pos-shadow-rgb: 16, 40, 28;
+}
+
+body.cpos-body {
+  margin: 0;
+  background: var(--pos-bg);
+  color: var(--pos-text);
+  font-family: var(--pos-font);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  color-scheme: light;
+}
+
+body.cpos-body,
+body.cpos-body #root {
+  height: 100%;
+}
+
+html:has(body.cpos-body) {
+  height: 100%;
+}
+
+.cpos *,
+.cpos *::before,
+.cpos *::after {
+  box-sizing: border-box;
+}
+
+.cpos {
+  height: 100%;
+}
+
+.cpos input,
+.cpos select,
+.cpos textarea,
+.cpos button {
+  font: inherit;
+  color: inherit;
+}
+
+.cpos input,
+.cpos textarea {
+  user-select: text;
+}
+
+.cpos button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cpos button:disabled {
+  cursor: not-allowed;
+}
+
+/* receipt printing: only #print-root goes to the printer */
+#print-root {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  body.cpos-body {
+    background: #fff;
+  }
+  body.cpos-body #root,
+  body.cpos-body > *:not(#print-root) {
+    display: none !important;
+  }
+  body.cpos-body #print-root {
+    display: block;
+  }
+}

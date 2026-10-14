@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { KeyRound, Monitor, Plus, RefreshCw, Trash2, Wifi, WifiOff, X } from "lucide-react";
+import { Cloud, ExternalLink, KeyRound, Monitor, ReceiptText, RefreshCw, Trash2, Wifi, WifiOff, X } from "lucide-react";
 import { posDeviceService, warehouseService } from "../../../api/api.service";
 import { nameKh } from "../setup/setupOptions";
 import { dateTimeText } from "../master_data/MasterDataPage";
@@ -8,6 +8,7 @@ import Select from "../../util/Select"; // searchable <select>
 import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
 import "./pos.style.css";
+import ReceiptStylePicker from "./ReceiptStylePicker";
 
 // POS computers: one row per counter in a shop. A new POS gets a 6-digit pairing code (30 min) —
 // type it on the POS once; after that it syncs with its own key. "New code" unlinks the old one.
@@ -29,6 +30,7 @@ function PosDeviceComponent() {
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState("");
   const [, tick] = useState(0);
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const notify = (type, text) => setNotice({ type, text });
 
   const load = useCallback(async () => {
@@ -61,11 +63,15 @@ function PosDeviceComponent() {
 
   const replace = (doc) => setRows((list) => list.map((r) => (r._id === doc._id ? { ...r, ...doc } : r)));
 
+  const openAdd = (kind) => {
+    setFormError("");
+    setEditor({ kind, warehouse_id: shops.length === 1 ? shops[0]._id : "", name: "" });
+  };
   const create = async () => {
     setBusy(true);
     setFormError("");
     try {
-      const res = await posDeviceService.create({ warehouse_id: editor.warehouse_id, name: editor.name });
+      const res = await posDeviceService.create({ warehouse_id: editor.warehouse_id, name: editor.name, kind: editor.kind });
       setEditor(null);
       notify("success", res.message);
       setRows((list) => [...list, res.data].sort((a, b) => a.code.localeCompare(b.code)));
@@ -109,9 +115,15 @@ function PosDeviceComponent() {
           <p className="pdv-intro">{L("POS មួយ = កុំព្យូទ័រលក់មួយនៅហាង។ បង្កើត POS ហើយវាយលេខកូដ 6 ខ្ទង់នៅលើ POS ដើម្បីភ្ជាប់។", "One POS = one sales computer in a shop. Add a POS, then type its 6-digit code on that computer to link it.")}</p>
         </div>
         <div className="md-toolbar-actions">
+          <button type="button" className="md-btn md-btn-ghost" onClick={() => setReceiptOpen(true)} title={L("ជ្រើសទម្រង់វិក្កយបត្រសម្រាប់ POS ទាំងអស់", "Choose the receipt style for every POS")}>
+            <ReceiptText size={16} />{L("ទម្រង់វិក្កយបត្រ", "Receipt style")}
+          </button>
           <button type="button" className="md-btn md-btn-ghost" onClick={load} disabled={loading} title={L("ផ្ទុកឡើងវិញ", "Reload")}><RefreshCw size={16} className={loading ? "md-spin" : ""} /></button>
-          <button type="button" className="md-btn md-btn-primary" onClick={() => { setFormError(""); setEditor({ warehouse_id: shops.length === 1 ? shops[0]._id : "", name: "" }); }}>
-            <Plus size={16} />{L("បន្ថែម POS", "Add POS")}
+          <button type="button" className="md-btn md-btn-primary" onClick={() => openAdd("local")} title={L("POS ដំណើរការលើកុំព្យូទ័រនៅហាង (local_pos) — លក់បានពេលគ្មានអ៊ីនធឺណិត", "A POS computer in the shop (local_pos) — sells offline")}>
+            <Monitor size={16} />{L("បន្ថែម POS ក្នុងម៉ាស៊ីន", "Add local POS")}
+          </button>
+          <button type="button" className="md-btn md-btn-primary" onClick={() => openAdd("cloud")} title={L("POS ក្នុងកម្មវិធីរុករក (/cloud/pos) — មិនចាំបាច់ដំឡើង", "A POS in the browser (/cloud/pos) — nothing to install")}>
+            <Cloud size={16} />{L("បន្ថែម POS អនឡាញ", "Add cloud POS")}
           </button>
         </div>
       </div>
@@ -128,13 +140,15 @@ function PosDeviceComponent() {
             {g.list.map((d) => {
               const online = d.last_seen_at && Date.now() - new Date(d.last_seen_at).getTime() < ONLINE_MS;
               const waiting = !d.paired && d.pair_code && minutesLeft(d.pair_expires_at) > 0;
+              const isCloud = d.kind === "cloud";
               return (
                 <div key={d._id} className={`md-card pdv-card ${d.status ? "" : "is-off"}`}>
                   <div className="pdv-head">
-                    <span className="pdv-icon"><Monitor size={20} /></span>
+                    <span className={`pdv-icon ${isCloud ? "cloud" : ""}`}>{isCloud ? <Cloud size={20} /> : <Monitor size={20} />}</span>
                     <div className="pdv-title">
                       <b>{d.name}</b>
                       <code>{d.code}</code>
+                      <span className={`pdv-kind ${isCloud ? "cloud" : ""}`}>{isCloud ? L("POS អនឡាញ", "Cloud POS") : L("POS ក្នុងម៉ាស៊ីន", "Local POS")}</span>
                     </div>
                     <label className="md-switch" title={d.status ? L("បិទ POS", "Turn off") : L("បើក POS", "Turn on")}>
                       <input type="checkbox" checked={!!d.status} onChange={() => toggle(d)} />
@@ -159,6 +173,11 @@ function PosDeviceComponent() {
                     <div className="pdv-info"><span className="pdv-expired">{L("លេខកូដផុតកំណត់ — បង្កើតលេខកូដថ្មី", "Code expired — make a new code")}</span></div>
                   )}
                   <div className="pdv-actions">
+                    {isCloud && (
+                      <a href="/cloud/pos" target="_blank" rel="noopener" className="md-btn md-btn-ghost" title={L("បើក POS អនឡាញ ក្នុងផ្ទាំងថ្មី ហើយវាយលេខកូដ", "Open the cloud POS in a new tab, then type the code")}>
+                        <ExternalLink size={15} />{L("បើក", "Open")}
+                      </a>
+                    )}
                     <button type="button" className="md-btn md-btn-ghost" onClick={() => setConfirm({ kind: "code", device: d, title: L("លេខកូដភ្ជាប់ថ្មី", "New pairing code"), text: d.paired ? L(`POS ${d.code} នឹងផ្តាច់ភ្លាម ហើយត្រូវភ្ជាប់ម្តងទៀតដោយលេខកូដថ្មី។ បន្ត?`, `${d.code} is unlinked at once and must be paired again with the new code. Continue?`) : L("បង្កើតលេខកូដថ្មី (30 នាទី)?", "Make a new code (30 minutes)?"), run: () => posDeviceService.newCode(d._id) })}>
                       <KeyRound size={15} />{d.paired ? L("ភ្ជាប់ឡើងវិញ", "Re-pair") : L("លេខកូដថ្មី", "New code")}
                     </button>
@@ -175,7 +194,7 @@ function PosDeviceComponent() {
         <div className="md-modal-backdrop" onMouseDown={() => !busy && setEditor(null)}>
           <div className="md-modal md-modal-sm" onMouseDown={(e) => e.stopPropagation()}>
             <div className="md-modal-header">
-              <h3>{L("បន្ថែម POS", "Add POS")}</h3>
+              <h3>{editor.kind === "cloud" ? L("បន្ថែម POS អនឡាញ", "Add cloud POS") : L("បន្ថែម POS ក្នុងម៉ាស៊ីន", "Add local POS")}</h3>
               <button type="button" className="md-icon-btn" onClick={() => setEditor(null)} disabled={busy}><X size={18} /></button>
             </div>
             <div className="md-modal-body">
@@ -194,6 +213,11 @@ function PosDeviceComponent() {
                   <input className="pe-input" value={editor.name} placeholder={L("ឧ. តុគិតលុយ ១", "e.g. Counter 1")} onChange={(e) => setEditor({ ...editor, name: e.target.value })} />
                 </div>
               </div>
+              <p className="md-sub pdv-kind-hint">
+                {editor.kind === "cloud"
+                  ? L("លក់ក្នុងកម្មវិធីរុករក (Chrome) នៅ /cloud/pos — មិនចាំបាច់ដំឡើង។ បើក POS ហើយវាយលេខកូដ 6 ខ្ទង់។", "Sells in a browser (Chrome) at /cloud/pos — nothing to install. Open it and type the 6-digit code.")
+                  : L("កុំព្យូទ័រនៅហាងដែលដំឡើង local_pos — លក់បានពេលគ្មានអ៊ីនធឺណិត។ វាយលេខកូដ 6 ខ្ទង់នៅលើ POS។", "A shop computer running local_pos — sells offline. Type the 6-digit code on that POS.")}
+              </p>
               {formError && <div className="md-form-error">{formError}</div>}
             </div>
             <div className="md-modal-footer">
@@ -203,6 +227,8 @@ function PosDeviceComponent() {
           </div>
         </div>
       )}
+
+      {receiptOpen && <ReceiptStylePicker onClose={() => setReceiptOpen(false)} onSaved={() => notify("success", L("បានប្តូរទម្រង់វិក្កយបត្រ — POS នឹងប្រើបន្ទាប់ពីធ្វើសមកាលកម្ម", "Receipt style changed — each POS uses it after its next sync"))} />}
 
       {confirm && (
         <div className="md-modal-backdrop" onMouseDown={() => !busy && setConfirm(null)}>

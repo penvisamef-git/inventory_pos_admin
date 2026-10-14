@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Building2, ImagePlus, Percent, Receipt, Save, Boxes, X, Palette, Check } from "lucide-react";
 import { SKIN_LIST } from "../../theme/themes";
+import ReceiptStylePicker from "../pos/ReceiptStylePicker";
+import { receiptTemplate } from "../../cloudpos/receiptTemplates";
+import { COLOR_FAMILIES } from "../../theme/themeSeeds";
 import { setSkin } from "../../theme/default/color.script";
 import { settingService, uploadService } from "../../../api/api.service";
 import { TAX_MODE_OPTIONS, canEditSetup } from "./setupOptions";
@@ -26,6 +29,7 @@ const EMPTY = {
   low_stock_default: 5,
   expiry_alert_days: 30,
   ui_theme: "forest",
+  receipt_template: "classic",
 };
 
 function Field({ label, hint, children, full }) {
@@ -42,20 +46,22 @@ function Field({ label, hint, children, full }) {
 function ThemePreview({ skin }) {
   const c = skin.light;
   const r = (px) => `${Math.round(px * skin.radius)}px`;
-  const navySide = skin.key === "navy";
+  const darkSide = skin.look === "dark";
+  const pill = skin.look === "flat" ? "4px" : skin.look === "dark" ? "6px" : "999px";
   return (
     <div className="st-theme-shot" style={{ background: c.background.app, borderRadius: r(12), fontFamily: `"${skin.fontName}", system-ui` }}>
-      <div className="st-theme-side" style={{ background: navySide ? "#13213a" : c.background.sidebar, borderRadius: r(9) }}>
+      <div className="st-theme-side" style={{ background: darkSide ? skin.sideDark : c.background.sidebar, borderRadius: r(9) }}>
         <i style={{ background: c.gradient.button, borderRadius: r(6) }} />
-        <b style={{ background: navySide ? c.gold.main : c.primary.main }} />
-        <b style={{ background: navySide ? "#4a5a75" : c.border.strong }} />
-        <b style={{ background: navySide ? "#4a5a75" : c.border.strong }} />
+        <b style={{ background: darkSide ? c.gold.main : c.primary.main }} />
+        <b style={{ background: darkSide ? "rgba(255,255,255,0.22)" : c.border.strong }} />
+        <b style={{ background: darkSide ? "rgba(255,255,255,0.22)" : c.border.strong }} />
       </div>
       <div className="st-theme-main">
         <div className="st-theme-hero" style={{ background: c.gradient.primary, borderRadius: r(10) }}>Aa</div>
         <div className="st-theme-card" style={{ background: c.background.card, borderRadius: r(10), color: c.text.primary }}>
-          <span style={{ background: c.primary.soft, color: c.primary.dark, borderRadius: skin.key === "ocean" ? "4px" : skin.key === "navy" ? "5px" : "999px" }}>{skin.name_en}</span>
-          <em style={{ background: c.gradient.button, borderRadius: skin.key === "ocean" ? "6px" : skin.key === "navy" ? "7px" : "999px" }} />
+          <span style={{ background: c.primary.soft, color: c.primary.dark, borderRadius: pill }}>{skin.name_en}</span>
+          <em style={{ background: c.gradient.button, borderRadius: pill }} />
+          <i className="st-theme-dot" style={{ background: c.gold.main }} />
         </div>
       </div>
     </div>
@@ -90,6 +96,19 @@ function SettingComponent() {
 
   // theme: saved at once (whole system), applied right away
   const [themeSaving, setThemeSaving] = useState("");
+  const [family, setFamily] = useState("");
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  // the preview cards use each theme's own font (one request, bold only)
+  useEffect(() => {
+    const id = "st-theme-fonts";
+    if (document.getElementById(id)) return;
+    const fams = [...new Set(SKIN_LIST.map((k) => k.fontName))].map((f) => `family=${f.replace(/ /g, "+")}:wght@700`).join("&");
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?${fams}&display=swap`;
+    document.head.appendChild(link);
+  }, []);
   const pickTheme = async (key) => {
     if (!canEdit || key === form.ui_theme) return;
     const before = form.ui_theme;
@@ -153,42 +172,6 @@ function SettingComponent() {
     <form className="md-page st-page" onSubmit={save}>
       {notice && <div className="md-notice md-notice-success">{notice}</div>}
       {!canEdit && <div className="md-hint">{L("អ្នកអាចមើលបានតែប៉ុណ្ណោះ (កែប្រែបានតែអ្នកគ្រប់គ្រងប្រព័ន្ធ)", "View only (only the admin can edit)")}</div>}
-
-      {/* ---------- Theme ---------- */}
-      <section className="st-card">
-        <header>
-          <Palette size={18} />
-          <h3>{L("រចនាប័ទ្មប្រព័ន្ធ", "System theme")}</h3>
-        </header>
-        <p className="md-hint st-theme-hint">
-          {L(
-            "ពណ៌ រាង និងអក្សរ សម្រាប់អ្នកប្រើទាំងអស់ (Admin web និង Shop portal)។ ភ្លឺ / ងងឹត នៅតែជាជម្រើសរបស់អ្នកប្រើម្នាក់ៗ។",
-            "Colors, shapes and fonts for everyone (admin web and shop portal). Light / dark stays each user's own choice.",
-          )}
-        </p>
-        <div className="st-themes">
-          {SKIN_LIST.map((skin) => {
-            const on = form.ui_theme === skin.key;
-            return (
-              <button
-                key={skin.key}
-                type="button"
-                className={`st-theme ${on ? "on" : ""}`}
-                onClick={() => pickTheme(skin.key)}
-                disabled={!canEdit || !!themeSaving}
-                aria-pressed={on}
-              >
-                <ThemePreview skin={skin} />
-                <span className="st-theme-name">
-                  {on && <Check size={15} />}
-                  {L(skin.name_kh, skin.name_en)}
-                </span>
-                <span className="md-sub">{L(skin.desc_kh, skin.desc_en)}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
 
       {/* ---------- Company ---------- */}
       <section className="st-card">
@@ -279,6 +262,15 @@ function SettingComponent() {
           <Receipt size={18} />
           <h3>{L("វិក្កយបត្រ POS", "POS receipt")}</h3>
         </header>
+        <div className="st-receipt-style">
+          <div>
+            <b>{L("ទម្រង់វិក្កយបត្រ", "Receipt style")}: {L(receiptTemplate(form.receipt_template).kh, receiptTemplate(form.receipt_template).en)}</b>
+            <span className="md-sub">{L("24 ទម្រង់ — POS ទាំងអស់បោះពុម្ពតាមទម្រង់នេះ", "24 styles — every POS prints with it")}</span>
+          </div>
+          <button type="button" className="md-btn md-btn-ghost" onClick={() => setReceiptOpen(true)}>
+            <Receipt size={16} /> {canEdit ? L("ជ្រើសទម្រង់", "Choose style") : L("មើល", "View")}
+          </button>
+        </div>
         <div className="st-grid">
           <Field label={L("ក្បាលវិក្កយបត្រ", "Receipt header")} full>
             <textarea rows={2} value={form.receipt_header} onChange={set("receipt_header")} disabled={disabled} />
@@ -313,6 +305,65 @@ function SettingComponent() {
             {saving ? L("កំពុងរក្សាទុក...", "Saving...") : L("រក្សាទុកការកំណត់", "Save settings")}
           </button>
         </div>
+      )}
+      {/* ---------- Theme ---------- */}
+      <section className="st-card">
+        <header>
+          <Palette size={18} />
+          <h3>{L("រចនាប័ទ្មប្រព័ន្ធ", "System theme")}</h3>
+        </header>
+        <p className="md-hint st-theme-hint">
+          {L(
+            "ពណ៌ រាង និងអក្សរ សម្រាប់អ្នកប្រើទាំងអស់ (Admin web និង Shop portal)។ ភ្លឺ / ងងឹត នៅតែជាជម្រើសរបស់អ្នកប្រើម្នាក់ៗ។",
+            "Colors, shapes and fonts for everyone (admin web and shop portal). Light / dark stays each user's own choice.",
+          )}
+        </p>
+        <div className="st-families" role="group" aria-label={L("ជ្រើសតាមពណ៌", "Filter by colour")}>
+          <button type="button" className={family === "" ? "on" : ""} onClick={() => setFamily("")}>
+            {L("ទាំងអស់", "All")} <small>{SKIN_LIST.length}</small>
+          </button>
+          {COLOR_FAMILIES.map((f) => {
+            const n = SKIN_LIST.filter((k) => k.family === f.key).length;
+            return n ? (
+              <button key={f.key} type="button" className={family === f.key ? "on" : ""} onClick={() => setFamily(f.key)} title={L(f.kh, f.en)}>
+                <i style={{ background: f.hex }} />
+                {L(f.kh, f.en)} <small>{n}</small>
+              </button>
+            ) : null;
+          })}
+        </div>
+        <div className="st-themes">
+          {SKIN_LIST.filter((k) => !family || k.family === family).map((skin) => {
+            const on = form.ui_theme === skin.key;
+            return (
+              <button
+                key={skin.key}
+                type="button"
+                className={`st-theme ${on ? "on" : ""}`}
+                onClick={() => pickTheme(skin.key)}
+                disabled={!canEdit || !!themeSaving}
+                aria-pressed={on}
+              >
+                <ThemePreview skin={skin} />
+                <span className="st-theme-name">
+                  {on && <Check size={15} />}
+                  {L(skin.name_kh, skin.name_en)}
+                </span>
+                <span className="md-sub">{L(skin.desc_kh, skin.desc_en)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {receiptOpen && (
+        <ReceiptStylePicker
+          onClose={() => setReceiptOpen(false)}
+          onSaved={(k) => {
+            setForm((f) => ({ ...f, receipt_template: k }));
+            setNotice(L("បានប្តូរទម្រង់វិក្កយបត្រ!", "Receipt style changed!"));
+          }}
+        />
       )}
     </form>
   );

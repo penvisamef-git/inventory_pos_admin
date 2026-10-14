@@ -72,6 +72,18 @@ Telegram (`page/dashboard/telegram/`, one page with 5 tabs): **Bots** — add wi
 
 Phase 1 (master data) and Phase 2 (stock) are complete. Phase 3 (POS) has started: POS devices here, the shop app in `local_pos` / `local_pos_api`.
 
+## Payment method QR
+
+Setup → Payment methods: switch **Show a QR for the customer to scan** on and upload the shop's QR picture (`qr_enabled`, `qr_image`, required when on). Both POS show it on the customer display while that method is chosen in Pay.
+
+## POS receipt style (24)
+
+CONNECT → POS devices → **Receipt style**, or General settings → POS receipt → **Choose style**: a dialog with all 24 styles drawn with the real receipt (`dashboard/pos/ReceiptStylePicker.jsx`), big preview at 80 mm, **Use this style** saves `setting.receipt_template`. Every POS (local + cloud) gets it with the sync (≤ 5 min or Sync) and prints with it. Styles: `src/page/cloudpos/receiptTemplates.js` (font, header, lines, item layout, total, meta, size, footer incl. a Code 39 barcode of the invoice no); CSS `cloudpos/screens/receipt.css`. Copies in local_pos (`src/receiptTemplates.js`, `src/screens/receipt.css`) and the keys in the API (`RECEIPT_TEMPLATES`).
+
+## Warehouses / Shops — `/setup/warehouse`
+
+List or grid (switch, remembered). Each warehouse shows the stock inside (items with stock, total qty, below 0). The eye button / stock strip opens `WarehouseStockDialog`: items in stock, low, out, below 0, expiring, stock value (cost roles), transfers waiting, with a searchable item list (`/stock/balance?warehouse_id=&only=`, `/stock/expiry`) and links to movements / stock on hand / shop dashboard. A warehouse that still holds stock can't be deleted (no delete button; the API refuses with `HAS_STOCK`, also `HAS_POS` while POS devices are linked).
+
 ## Shop portal — `/shop/:code/...`
 
 A second layout in the same app (top header + tabs, no admin sidebar) for **one warehouse at a time** (`page/portal/`).
@@ -97,18 +109,31 @@ Every dropdown uses `page/util/Select.jsx` — same props as `<select>` (value, 
 
 ## Themes
 
-Admin → SYSTEM → General settings (`/setting`) → **System theme**: Forest, Ocean, Candy, Navy & Gold — one theme for everyone (admin web, shop portal, login page); light / dark stays each user's choice.
+Admin → SYSTEM → General settings (`/setting`) → **System theme** (bottom of the page, filter by colour): 24 themes — Forest, Ocean, Candy, Navy & Gold + 20 made from seeds (Emerald, Lagoon, Olive, Jungle, Sky, Arctic, Indigo, Midnight, Royal, Lavender, Grape, Bubblegum, Rose, Wine, Coral, Cherry, Sunset, Honey, Mocha, Charcoal) — one theme for everyone (admin web, shop portal, login page); light / dark stays each user's choice.
 - `src/page/theme/themes.js` — each theme: light + dark palette (CSS variables `--color-*`), corner scale (`--ui-radius`), font (`--font-*`, loaded on demand).
-- `src/page/theme/themes.css` — a few look tweaks per theme (`html[data-skin="navy"] …`). All `border-radius` in the CSS use `calc(Npx * var(--ui-radius, 1))`, round pills `var(--ui-pill, 999px)`.
+- `src/page/theme/themeSeeds.js` — the 20 seed themes (main + accent colour, font, corners, look, colour group); `themes.js` builds their light / dark palettes. The POS screens (local_pos `theme.js` + its copy `themeSeeds.js`, Cloud POS) build their colours from the same seeds.
+- `src/page/theme/themes.css` — look tweaks per `html[data-look="soft|flat|playful|dark"]` (dark = dark sidebar, colour `--side-dark`). All `border-radius` in the CSS use `calc(Npx * var(--ui-radius, 1))`, round pills `var(--ui-pill, 999px)`.
 - `color.script.js` → `setSkin(key)`; the browser remembers the last theme (instant at start) and follows `GET /setup/theme` (no login needed).
-- New theme: copy a block in `themes.js` + add its key to `UI_THEMES` in the API setting model.
+- New theme: add a seed in `themeSeeds.js` (+ the copy in local_pos) + its key in `UI_THEMES` in the API setting model.
+
+## Cloud POS — `/cloud/pos` (+ `/cloud/pos/display`)
+
+The same POS screens as **local_pos**, inside this web app, for a shop without a POS computer. No admin login: open it from **Cloud POS** (topbar, shop portal header, CONNECT → POS devices), link the browser once with a POS device's **6-digit code**, then cashiers log in with their PIN.
+
+- **Fast and offline first**: everything lives in the browser (IndexedDB `cloud_pos`): products, stock, staff PIN hashes (checked with bcrypt in the browser), shifts, invoices, held carts, refunds. Paying saves the invoice locally first (no waiting for the internet), then it is sent in the background.
+- **Sync** (`src/page/cloudpos/engine/sync.js`, same `/pos-device/*` API as the local POS): push every 15 s (and when the internet comes back), pull products / stock / prices every 5 min (or the Sync button), ping every 20 s. Only one tab sends at a time (`navigator.locks`). Invoice / refund / shift numbers continue after the last ones the cloud has (`device.last_*_no` in the pull).
+- **Offline reload**: `src/service-worker.js` (production build only, registered when `/cloud/pos` opens) keeps the app files, fonts and product pictures; `/cloud/*` pages open from the cache when offline. The admin web itself is not served from the cache. Installable as an app (`public/cloud-pos.webmanifest`).
+- **Customer display**: `/cloud/pos/display` in another window / screen of the same browser (BroadcastChannel).
+- Unlinked in the admin (deleted / new code / turned off) → the browser clears the shop's data and shows the pairing page.
+- Code: `src/page/cloudpos/` — `engine/` (db, sync, api = the local API rebuilt on IndexedDB, money, bcrypt), the rest is copied from `local_pos/src` (keep both in step when the POS screens change).
+- ⚠️ Unsent invoices live only in that browser: don't clear site data / use a private window while the POS shows invoices waiting.
 
 ## Speed (caching)
 
 - `src/api/api.client.js` — **lookup lists** (`…-all`, category tree, current rate, roles) are reused for 60 s; **tables / pages** are stale-while-revalidate: `service.list(params, { onFresh })` shows the last copy of that page (≤ 5 min) at once and refreshes it quietly, `{ prefetch: true }` pre-loads the next page. Any save (POST / PUT / DELETE) clears everything. Used by every table (MasterDataPage, StockDocPage, products, prices, stock on hand, movements, near expiry, users, activity log, shop portal dashboard / staff). Page copies are also kept in the tab's sessionStorage (≤ 3 MB), so a refresh (F5) shows tables at once.
 - Dashboard home: one request (`GET /dashboard/summary`); the last numbers show at once on return.
 - Each screen is its own JS file (`routes/lazyPage.js`, auto reload once after a new deploy); after login all screens' files download in the background (`preloadPages`).
-- `firebase.json`: `/static/**` cached 1 year (file names change on each build), pages `no-cache`.
+- `firebase.json`: `/static/**` cached 1 year (file names change on each build), pages, `service-worker.js` and `cloud-pos.webmanifest` `no-cache`.
 
 ## Structure
 
@@ -126,6 +151,7 @@ src/
       setup/      warehouse, setting, exchange rate, payment method
       product/    product list + editor, category, unit, attribute, brand (product.style.css)
       stock/      stock documents (StockDocPage), on hand, movements, expiry, opening (Excel)
+    cloudpos/     Cloud POS (/cloud/pos): engine/ (IndexedDB + sync) + screens copied from local_pos
     portal/       Shop portal: PortalLayout (header, switcher, tabs), PortalDashboard, PortalStaff, portalContext
       home/ user/ log/ account/
 ```

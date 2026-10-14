@@ -10,6 +10,8 @@ import {
   RefreshCw,
   ImagePlus,
   Image as ImageIcon,
+  List as ListIcon,
+  LayoutGrid,
 } from "lucide-react";
 import { uploadService } from "../../../api/api.service";
 import "./masterdata.style.css";
@@ -267,7 +269,25 @@ function MasterDataPage({
   canEditRow,
   hideStatus,
   wide,
+  gridCard, // (row) => card content → adds a List / Grid switch (remembered per page in viewKey)
+  viewKey,
 }) {
+  const [view, setViewState] = useState(() => {
+    if (!gridCard) return "list";
+    try {
+      return localStorage.getItem(`md_view_${viewKey || title}`) || "grid";
+    } catch {
+      return "grid";
+    }
+  });
+  const setView = (v) => {
+    setViewState(v);
+    try {
+      localStorage.setItem(`md_view_${viewKey || title}`, v);
+    } catch {
+      // storage blocked → this visit only
+    }
+  };
   const emptyForm = () =>
     fields.reduce(
       (acc, f) => {
@@ -668,6 +688,16 @@ function MasterDataPage({
         </div>
 
         <div className="md-toolbar-actions">
+          {gridCard && (
+            <div className="md-viewswitch" role="group" aria-label={L("របៀបបង្ហាញ", "View")}>
+              <button type="button" className={view === "list" ? "on" : ""} onClick={() => setView("list")} title={L("បញ្ជី", "List")} aria-pressed={view === "list"}>
+                <ListIcon size={16} />
+              </button>
+              <button type="button" className={view === "grid" ? "on" : ""} onClick={() => setView("grid")} title={L("ក្រឡា", "Grid")} aria-pressed={view === "grid"}>
+                <LayoutGrid size={16} />
+              </button>
+            </div>
+          )}
           <button type="button" className="md-btn md-btn-ghost" onClick={loadData} disabled={loading} title={L("ផ្ទុកឡើងវិញ", "Reload")}>
             <RefreshCw size={16} className={loading ? "md-spin" : ""} />
           </button>
@@ -680,8 +710,35 @@ function MasterDataPage({
         </div>
       </div>
 
-      {/* ===== Table ===== */}
+      {/* ===== Table / grid ===== */}
       <div className="md-card">
+        {gridCard && view === "grid" ? (
+          <div className="md-gridview">
+            {loading && rows.length === 0 && <div className="md-empty">{L("កំពុងផ្ទុកទិន្នន័យ...", "Loading data...")}</div>}
+            {!loading && listError && <div className="md-empty md-empty-error">{listError}</div>}
+            {!loading && !listError && rows.length === 0 && (
+              <div className="md-empty">{search ? L("រកមិនឃើញទិន្នន័យដែលត្រូវនឹងការស្វែងរក", "Nothing matches your search") : L("មិនទាន់មានទិន្នន័យ", "No data yet")}</div>
+            )}
+            {rows.map((row) => (
+              <div key={row._id} className={`md-gcard ${row.status === false ? "is-off" : ""}`}>
+                {gridCard(row)}
+                <div className="md-gcard-actions">
+                  {extraActions && extraActions(row, loadData)}
+                  {canEdit && (!canEditRow || canEditRow(row)) && (
+                    <button type="button" className="md-icon-btn" onClick={() => openEdit(row)} title={L("កែប្រែ", "Edit")}>
+                      <Pencil size={15} />
+                    </button>
+                  )}
+                  {canEdit && (!canDelete || canDelete(row)) && (
+                    <button type="button" className="md-icon-btn md-icon-btn-danger" onClick={() => setDeleting(row)} title={L("លុប", "Delete")}>
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="md-table-scroll">
           <table className="md-table">
             <thead>
@@ -747,6 +804,7 @@ function MasterDataPage({
             </tbody>
           </table>
         </div>
+        )}
 
         {/* ===== Pagination ===== */}
         <div className="md-pagination">

@@ -586,3 +586,67 @@
     overflow-y: auto;
   }
 }
+
+/* ---------- today's sales ---------- */
+.pd-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--md-primary);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.pd-today {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pd-today-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pd-today-main b {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--md-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-today-main span {
+  color: var(--md-muted);
+  font-size: 13px;
+}
+
+.pd-today-main .pd-today-rf {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #dc2626;
+  font-weight: 650;
+}
+
+.pd-today-pos {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--md-soft);
+  font-size: 13px;
+}
+
+.pd-today-pos span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 650;
+}
+
+.pd-muted {
+  color: var(--md-muted);
+}

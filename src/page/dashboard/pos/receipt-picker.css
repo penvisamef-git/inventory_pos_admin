@@ -1,0 +1,152 @@
+/* Receipt style picker (admin) */
+.md-modal.rsp {
+  width: 1180px;
+  max-width: 100%;
+}
+
+.rsp .md-modal-header h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md-modal-body.rsp-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 18px;
+  align-items: start;
+}
+
+.rsp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.rsp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 2px solid var(--color-border-light);
+  border-radius: calc(14px * var(--ui-radius, 1));
+  background: var(--color-background-card);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rsp-item:hover {
+  border-color: var(--color-primary-mint);
+}
+
+.rsp-item.on {
+  border-color: var(--color-primary-main);
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb, 31, 122, 77), 0.12);
+}
+
+/* small preview: the real receipt scaled down, top part only */
+.rsp-mini {
+  position: relative;
+  display: block;
+  height: 190px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #eceeed;
+}
+
+.rsp-mini-in {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.47);
+  transform-origin: top center;
+  pointer-events: none;
+}
+
+.rsp-mini-in .rc {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.rsp-mini::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 30px;
+  background: linear-gradient(transparent, #eceeed);
+}
+
+.rsp-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.rsp-item.on .rsp-name {
+  color: var(--color-primary-main);
+}
+
+.rsp-name em {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: var(--ui-pill, 999px);
+  background: var(--color-gold-soft);
+  color: #8a5a00;
+  font-size: 10.5px;
+  font-style: normal;
+}
+
+.rsp-big {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rsp-big-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.rsp-paper {
+  max-height: 62vh;
+  overflow-y: auto;
+  padding: 14px;
+  border-radius: 12px;
+  background: #eceeed;
+}
+
+.rsp-paper .rc {
+  margin: 0 auto;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.rsp .md-modal-footer {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rsp-hint {
+  flex: 1 1 280px;
+  margin-right: auto;
+}
+
+.rsp-err {
+  flex-basis: 100%;
+}
+
+@media (max-width: 900px) {
+  .rsp-body {
+    grid-template-columns: 1fr;
+  }
+  .rsp-big {
+    position: static;
+  }
+}

@@ -242,3 +242,80 @@
   width: 30px;
   height: 14px;
 }
+
+/* theme colour filter */
+.st-families {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.st-families button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--ui-pill, 999px);
+  background: var(--color-background-card);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.st-families button i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.st-families button small {
+  color: var(--color-text-light);
+  font-weight: 600;
+}
+
+.st-families button:hover {
+  border-color: var(--color-primary-main);
+}
+
+.st-families button.on {
+  border-color: var(--color-primary-main);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+}
+
+.st-theme-card {
+  position: relative;
+}
+
+.st-theme-dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.st-receipt-style {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: calc(12px * var(--ui-radius, 1));
+  background: var(--color-primary-soft);
+}
+
+.st-receipt-style > div {
+  display: flex;
+  flex-direction: column;
+}

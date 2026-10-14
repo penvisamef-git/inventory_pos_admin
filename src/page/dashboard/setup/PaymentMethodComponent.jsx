@@ -23,6 +23,11 @@ const COLUMNS = [
   { key: "currency", label: L("រូបិយប័ណ្ណ", "Currency"), render: (row) => labelOf(CURRENCY_OPTIONS, row.currency) },
   { key: "requires_reference", label: L("ត្រូវការលេខយោង", "Needs reference"), render: (row) => yesNo(row.requires_reference) },
   { key: "online_mode", label: L("QR មានចំនួនទឹកប្រាក់", "QR with amount"), render: (row) => yesNo(row.online_mode) },
+  {
+    key: "qr_image",
+    label: L("QR អតិថិជនស្កេន", "QR to scan"),
+    render: (row) => (row.qr_enabled && row.qr_image?.url ? imageCell(row.qr_image) : <span className="md-badge md-badge-off">{L("បិទ", "Off")}</span>),
+  },
   { key: "status", label: L("ស្ថានភាព", "Status"), render: statusCell },
 ];
 
@@ -35,6 +40,22 @@ const FIELDS = [
   { key: "currency", label: L("រូបិយប័ណ្ណ", "Currency"), type: "select", noEmpty: true, default: "any", options: CURRENCY_OPTIONS },
   { key: "requires_reference", label: L("អ្នកគិតលុយត្រូវបញ្ចូលលេខយោង (QR ពេលគ្មានអ៊ីនធឺណិត)", "Cashier must enter a reference no. (QR when offline)"), type: "checkbox", full: true },
   { key: "online_mode", label: L("បង្កើត QR មានចំនួនទឹកប្រាក់ពេលមានអ៊ីនធឺណិត (KHQR / ABA)", "Make a QR with the amount when online (KHQR / ABA)"), type: "checkbox", full: true },
+  {
+    key: "qr_enabled",
+    label: L("បង្ហាញ QR ឱ្យអតិថិជនស្កេនបង់ (អេក្រង់អតិថិជន)", "Show a QR for the customer to scan and pay (customer display)"),
+    type: "checkbox",
+    full: true,
+  },
+  {
+    key: "qr_image",
+    label: L("រូប QR (KHQR / ABA / Wing ...)", "QR picture (KHQR / ABA / Wing ...)"),
+    type: "image",
+    folder: "setting",
+    required: true,
+    full: true,
+    showIf: (form) => !!form.qr_enabled,
+    hint: L("រូប QR របស់ហាង — បង្ហាញលើអេក្រង់អតិថិជន ពេលអ្នកគិតលុយជ្រើសវិធីនេះ", "The shop's QR picture — shown on the customer display when the cashier picks this method"),
+  },
   { key: "note", label: L("កំណត់សម្គាល់", "Note"), type: "textarea", full: true },
 ];
 

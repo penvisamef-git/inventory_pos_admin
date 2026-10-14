@@ -25,6 +25,7 @@ const SalesPage = lazyPage(() => import("../page/dashboard/sale/SalesPage"));
 const NoteComponent = lazyPage(() => import("../page/dashboard/note/NoteComponent"));
 const PrintDoc = lazyPage(() => import("../page/print/PrintDoc"));
 const CatalogPage = lazyPage(() => import("../page/catalog/CatalogPage"));
+const CloudPosPage = lazyPage(() => import("../page/cloudpos/CloudPosPage"));
 
 function RouteComponent() {
   //**************** Declaration ****************//
@@ -116,6 +117,12 @@ function RouteComponent() {
     />
   );
 
+  // ✅ Cloud POS /cloud/pos (+ /cloud/pos/display) — no admin login: the browser is linked with a 6-digit code
+  const routeCloudPos = () => [
+    <Route key="/cloud/pos" path="/cloud/pos" element={<Suspense fallback={null}><CloudPosPage /></Suspense>} />,
+    <Route key="/cloud/pos/display" path="/cloud/pos/display" element={<Suspense fallback={null}><CloudPosPage display /></Suspense>} />,
+  ];
+
   // ✅ Login route — redirect to /home if already logged in
   const routeLogin = () => {
     const isLogin = auth.getClientLogin();
@@ -187,6 +194,7 @@ function RouteComponent() {
     <BrowserRouter>
       <Routes>
         {routeCatalog()}
+        {routeCloudPos()}
         {routeLogin()}
         {routePublic()}
         {routePortal()}

@@ -55,6 +55,8 @@ export function applyMode(mode = getPrefs().theme, skinKey = currentSkin()) {
   const root = document.documentElement;
   root.dataset.theme = theme;
   root.dataset.skin = skin.key;
+  root.dataset.look = skin.look || "soft"; // soft · flat · playful · dark (themes.css)
+  root.style.setProperty("--side-dark", skin.sideDark || "#13213a");
   root.style.colorScheme = theme;
   // shape + fonts
   root.style.setProperty("--ui-radius", String(skin.radius));

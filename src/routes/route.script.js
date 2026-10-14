@@ -48,7 +48,7 @@ class RouteScript {
         icon: <LayoutDashboard />,
         component: <HomeComponent />,
         url: "home",
-        subtitle: L("សង្ខេបឃ្លាំង ហាង និងការរៀបចំប្រព័ន្ធ", "Warehouses, shops and system setup at a glance"),
+        subtitle: L("សង្ខេបការលក់ ស្តុក និងហាង", "Sales, stock alerts and shops at a glance"),
         access: ACCESS.ALL,
         type: "index",
         breadcrumb: [

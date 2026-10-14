@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { PackageSearch, AlertTriangle, CalendarClock, Truck, ClipboardPen, Users, ArrowRight, RefreshCw, ReceiptText, KeyRound } from "lucide-react";
+import { PackageSearch, AlertTriangle, CalendarClock, Truck, ClipboardPen, Users, ArrowRight, RefreshCw, ReceiptText, KeyRound, MonitorSmartphone, RotateCcw } from "lucide-react";
 import { shopService } from "../../api/api.service";
 import { usePortal } from "./portalContext";
 import { OptionChips, dateOnly, qtyText, usd, valueName } from "../dashboard/stock/stockOptions";
@@ -69,11 +69,43 @@ function PortalDashboard() {
         <section className="pd-panel pd-sales">
           <div className="pd-panel-head">
             <h3><ReceiptText size={16} /> {L("ការលក់ថ្ងៃនេះ", "Today's sales")}</h3>
+            {d.sales && <Link to={`${base}/sales`} className="pd-more">{L("មើលទាំងអស់", "See all")} <ArrowRight size={14} /></Link>}
           </div>
-          <div className="pd-soon">
-            <b>{L("នឹងមានបន្ទាប់ពីភ្ជាប់ POS", "Coming when the POS is connected")}</b>
-            <span>{L("ការលក់ វេនការងារ និងស្ថានភាព POS (ដំណាក់កាលទី 3)", "Sales, shifts and POS status (Phase 3)")}</span>
-          </div>
+          {!d.sales ? (
+            <div className="pd-soon">
+              <b>{L("ឃ្លាំងកណ្តាលមិនលក់តាម POS", "The central warehouse has no POS")}</b>
+            </div>
+          ) : (
+            <div className="pd-today">
+              <div className="pd-today-main">
+                <b>{usd(d.sales.today.total)}</b>
+                <span>
+                  {d.sales.today.count} {L("វិក្កយបត្រ", "invoices")} · {L("មធ្យម", "avg.")} {usd(d.sales.today.average)}
+                  {d.sales.yesterday.total > 0 && ` · ${L("ម្សិលមិញម៉ោងនេះ", "yesterday by now")} ${usd(d.sales.yesterday.total)}`}
+                </span>
+                {d.sales.today.refund_count > 0 && (
+                  <span className="pd-today-rf"><RotateCcw size={13} /> {L("សង", "Refunds")} −{usd(d.sales.today.refund_total)} · {L("សុទ្ធ", "net")} {usd(d.sales.today.net_total)}</span>
+                )}
+              </div>
+              <div className="pd-today-pos">
+                <span><MonitorSmartphone size={14} /> POS {d.sales.pos.online}/{d.sales.pos.devices} {L("កំពុងដំណើរការ", "online")}</span>
+                {d.sales.pos.open_shifts.map((sh) => (
+                  <span key={sh._id}>🟢 {sh.device} · {sh.opened_by_name} · {L("បើក", "since")} {new Date(sh.opened_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Phnom_Penh" })}</span>
+                ))}
+                {!d.sales.pos.open_shifts.length && <span className="pd-muted">{L("គ្មានវេនកំពុងបើក", "No shift open now")}</span>}
+              </div>
+              {d.sales.top_items.length > 0 && (
+                <div className="pd-today-top">
+                  {d.sales.top_items.map((i) => (
+                    <div key={i.variant_id} className="pd-row">
+                      <span className="pd-row-main"><b>{L(i.name_kh || i.sku, i.name_en || i.name_kh || i.sku)}</b><small>{i.sku}</small></span>
+                      <span className="pd-row-qty">× {qtyText(i.qty)} · {usd(i.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="pd-panel">

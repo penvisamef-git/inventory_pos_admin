@@ -1,0 +1,276 @@
+/* =========================================================
+   80 mm receipt (screen preview + paper) — 24 styles: receiptTemplates.js
+   rc-f-* font · rc-h-* head · rc-r-* lines · rc-i-* items · rc-t-* total · rc-m-* meta · rc-s-* size · rc-ft-* footer
+========================================================= */
+.rc {
+  --rc-rule: 1px dashed #000;
+  --rc-gap: 6px;
+  width: 72mm;
+  padding: 4mm 3mm 6mm;
+  background: #fff;
+  color: #000;
+  font-family: var(--pos-font, "Plus Jakarta Sans", "Kantumruy Pro Variable", "Kantumruy Pro", system-ui, sans-serif);
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* fonts */
+.rc-f-mono {
+  font-family: "Courier New", "Liberation Mono", "Kantumruy Pro Variable", "Kantumruy Pro", ui-monospace, monospace;
+}
+.rc-f-serif {
+  font-family: Georgia, "Times New Roman", "Kantumruy Pro Variable", "Kantumruy Pro", "Noto Serif Khmer", serif;
+}
+.rc-f-narrow {
+  font-family: "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", "Kantumruy Pro Variable", "Kantumruy Pro", sans-serif;
+}
+
+/* sizes */
+.rc-s-s {
+  font-size: 11px;
+  line-height: 1.32;
+}
+.rc-s-l {
+  font-size: 13.5px;
+}
+
+/* lines between parts */
+.rc-r-solid {
+  --rc-rule: 1px solid #000;
+}
+.rc-r-double {
+  --rc-rule: 3px double #000;
+}
+.rc-r-dotted {
+  --rc-rule: 1.5px dotted #000;
+}
+.rc-r-none {
+  --rc-rule: 0;
+  --rc-gap: 9px;
+}
+.rc-r-stars {
+  --rc-rule: 0;
+}
+.rc-r-stars > :not(:first-child)::before {
+  content: "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * *";
+  display: block;
+  overflow: hidden;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  text-align: center;
+  line-height: 1;
+}
+
+/* every part after the header (also the Z report / refund slip) */
+.rc > :not(:first-child) {
+  padding: var(--rc-gap) 0;
+  border-top: var(--rc-rule);
+}
+
+.rc-up .rc-head b,
+.rc-up .rc-total,
+.rc-up .rc-th {
+  text-transform: uppercase; /* no letter-spacing: it breaks Khmer letters */
+}
+
+/* ---------- header ---------- */
+.rc-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding-bottom: var(--rc-gap);
+  text-align: center;
+}
+.rc-head img {
+  max-width: 28mm;
+  max-height: 18mm;
+  margin-bottom: 4px;
+  object-fit: contain;
+}
+.rc-head b {
+  font-size: 1.25em;
+}
+.rc-note {
+  margin-top: 3px;
+  white-space: pre-line;
+}
+.rc-h-left .rc-head {
+  align-items: flex-start;
+  text-align: left;
+}
+.rc-h-logo-left .rc-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+  align-items: center;
+  text-align: left;
+}
+.rc-h-logo-left .rc-head img {
+  grid-row: 1 / span 6;
+  max-width: 18mm;
+  margin: 0;
+}
+.rc-h-logo-left .rc-head > :not(img) {
+  grid-column: 2;
+}
+.rc-h-banner .rc-head b {
+  align-self: stretch;
+  margin: 0 0 4px;
+  padding: 6px 4px;
+  background: #000;
+  color: #fff;
+  font-size: 1.3em;
+}
+.rc-h-boxed .rc-head {
+  margin-bottom: var(--rc-gap);
+  padding: 7px 6px;
+  border: 1.5px solid #000;
+  border-radius: 6px;
+}
+
+/* ---------- invoice no / date / cashier ---------- */
+.rc-meta {
+  display: flex;
+  flex-direction: column;
+}
+.rc-m-grid .rc-meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 8px;
+}
+.rc-m-grid .rc-meta > :nth-child(2n) {
+  text-align: right;
+}
+.rc-m-inline .rc-meta {
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  font-size: 0.92em;
+}
+
+/* ---------- items ---------- */
+.rc-items {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rc-items td,
+.rc-items th {
+  padding: 1px 0;
+  vertical-align: top;
+}
+.rc-name {
+  padding-top: 4px !important;
+  font-weight: 700;
+}
+.rc-r {
+  text-align: right !important;
+  white-space: nowrap;
+}
+.rc-sub {
+  display: block;
+  font-size: 0.88em;
+  font-weight: 400;
+}
+.rc-th {
+  border-bottom: 1px solid #000;
+  font-size: 0.88em;
+  font-weight: 700;
+  text-align: left;
+}
+.rc-i-table .rc-items td {
+  padding: 3px 0;
+}
+.rc-i-table .rc-items td + td,
+.rc-i-table .rc-items th + th {
+  padding-left: 5px;
+}
+.rc-i-one-line .rc-items td,
+.rc-i-numbered .rc-items td {
+  padding: 2px 0;
+}
+.rc-no {
+  width: 1.4em;
+  font-weight: 700;
+}
+
+/* ---------- totals ---------- */
+.rc-sum,
+.rc-pay {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rc-sum > div,
+.rc-pay > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rc-total {
+  margin-top: 3px;
+  font-size: 1.33em;
+  font-weight: 800;
+}
+.rc-t-huge .rc-total {
+  font-size: 1.8em;
+  line-height: 1.2;
+}
+.rc-t-boxed .rc-total {
+  padding: 4px 6px;
+  border: 1.5px solid #000;
+  border-radius: 4px;
+}
+.rc-t-inverted .rc-total {
+  padding: 5px 7px;
+  background: #000;
+  color: #fff;
+}
+.rc-t-underline .rc-total {
+  padding-bottom: 2px;
+  border-bottom: 3px double #000;
+}
+.rc-khr {
+  font-weight: 700;
+}
+
+/* ---------- footer ---------- */
+.rc-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.rc-ft-box .rc-foot b {
+  align-self: stretch;
+  margin-top: 4px;
+  padding: 6px;
+  border: 1.5px solid #000;
+  border-radius: 6px;
+}
+.rc-bars {
+  display: flex;
+  align-items: stretch;
+  height: 34px;
+  margin-top: 6px;
+}
+.rc-bars i {
+  display: block;
+  background: #000;
+}
+.rc-bars-text {
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+}
+
+@media print {
+  .rc {
+    width: 80mm;
+    padding: 2mm 4mm 8mm;
+    box-shadow: none;
+  }
+}

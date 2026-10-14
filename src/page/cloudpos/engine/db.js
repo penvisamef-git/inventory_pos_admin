@@ -1,6 +1,6 @@
 // IndexedDB for the browser POS (one database per browser). Everything the POS needs to sell offline lives here.
 const NAME = "cloud_pos";
-const VERSION = 1;
+const VERSION = 2; // 2: customers
 const STORES = {
   kv: "key", // config (device key, last sync …), data (shop data from the last pull)
   products: "_id",
@@ -12,6 +12,7 @@ const STORES = {
   refunds: "uuid",
   events: "uuid", // login / logout
   counters: "_id", // invoice / refund / shift / hold numbers
+  customers: "_id", // cloud copy (+ the ones added here: _id "u:<uuid>", synced false)
 };
 
 let opening = null;

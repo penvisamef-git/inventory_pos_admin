@@ -22,6 +22,7 @@ export function setLang(next) {
 export const usd = (v) => `$${Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 export const khr = (v) => `${Math.round(Number(v || 0)).toLocaleString("en-US")}៛`;
 export const qtyText = (n) => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 3 });
+export const dateText = (d) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Phnom_Penh" }) : "");
 export const timeText = (d) => (d ? new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Phnom_Penh" }) : "");
 export const dateTimeText = (d) =>
   d ? new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Phnom_Penh" }) : "";

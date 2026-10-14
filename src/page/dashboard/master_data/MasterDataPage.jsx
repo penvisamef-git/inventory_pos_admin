@@ -142,7 +142,7 @@ function SizesEditor({ value, onChange, disabled }) {
 }
 
 // ---------------- Rows editor: [{ ...row }] with typed columns ----------------
-// field: { type: "rows", columns: [{ key, label, placeholder, type: "text" | "color" | "number" | "time", width }], newRow: () => ({}) }
+// field: { type: "rows", columns: [{ key, label, placeholder, type: "text" | "color" | "number" | "time" | "select" (options), width }], newRow: () => ({}) }
 function RowsEditor({ field, value, onChange, disabled }) {
   const rows = Array.isArray(value) ? value : [];
   const cols = field.columns || [];
@@ -185,6 +185,13 @@ function RowsEditor({ field, value, onChange, disabled }) {
                   disabled={disabled}
                 />
               </label>
+            ) : c.type === "select" ? (
+              <Select key={c.key} value={row[c.key] ?? ""} onChange={(e) => update(i, c.key, e.target.value)} disabled={disabled}>
+                <option value="">{c.placeholder || L("-- ជ្រើសរើស --", "-- Choose --")}</option>
+                {(typeof c.options === "function" ? c.options() : c.options || []).map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </Select>
             ) : (
               <input
                 key={c.key}

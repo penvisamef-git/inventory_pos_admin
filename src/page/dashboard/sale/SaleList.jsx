@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Search, Percent, RotateCcw, ShieldAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Search, Percent, RotateCcw, ShieldAlert } from "lucide-react";
 import { saleService } from "../../../api/api.service";
 import { L } from "../../../i18n";
 import SaleDetail from "./SaleDetail";
+import { exportExcel } from "../../util/excel";
 import { usd, num, nm, dtText } from "./saleUtil";
 
 // Invoices received from the POS (newest first) — open one to check it
@@ -41,6 +42,36 @@ export default function SaleList({ params, tick, cost, portal }) {
   const s = res?.summary;
   const pages = res?.pagination?.totalPages || 1;
   const showCost = cost && s?.profit !== undefined;
+  const [busyX, setBusyX] = useState(false);
+  // every invoice of the filter (up to 5,000) → .xlsx
+  const download = async () => {
+    setBusyX(true);
+    try {
+      const p = JSON.parse(key);
+      const all = [];
+      for (let pg = 1; pg <= 25; pg++) {
+        const x = await saleService.list({ ...p, page: pg, limit: 200 });
+        all.push(...(x.data || []));
+        if (pg >= (x.pagination?.totalPages || 1)) break;
+      }
+      await exportExcel(`invoices-${p.from}_${p.to}.xlsx`, "Invoices", [
+        { label: L("វិក្កយបត្រ", "Invoice"), value: (x) => x.invoice_no, width: 22 },
+        { label: L("ពេលវេលា", "Time"), value: (x) => dtText(x.sold_at), width: 18 },
+        { label: L("ហាង", "Shop"), value: (x) => x.warehouse_id?.code || "", width: 10 },
+        { label: "POS", value: (x) => x.device_id?.code || "", width: 12 },
+        { label: L("អ្នកគិតលុយ", "Cashier"), value: (x) => x.cashier_name || "", width: 18 },
+        { label: L("អតិថិជន", "Customer"), value: (x) => x.customer_name || "", width: 18 },
+        { label: L("ចំនួនទំនិញ", "Items"), value: (x) => x.item_qty, type: "number" },
+        { label: L("បង់ដោយ", "Paid by"), value: (x) => (x.payments || []).map((p) => `${p.code} ${p.amount}`).join(", "), width: 30 },
+        { label: L("បញ្ចុះ ($)", "Discount ($)"), value: (x) => x.discount_total || 0, type: "number" },
+        { label: L("សរុប ($)", "Total ($)"), value: (x) => x.total, type: "number" },
+        { label: L("សង ($)", "Refunded ($)"), value: (x) => x.refunded_total || 0, type: "number" },
+        ...(showCost ? [{ label: L("ចំណេញ ($)", "Profit ($)"), value: (x) => x.profit ?? "", type: "number" }] : []),
+      ], all);
+    } finally {
+      setBusyX(false);
+    }
+  };
 
   return (
     <>
@@ -58,6 +89,7 @@ export default function SaleList({ params, tick, cost, portal }) {
           <button type="button" className={flag === "discount" ? "on" : ""} onClick={() => setFlag(flag === "discount" ? "" : "discount")}><Percent size={14} /> {L("មានបញ្ចុះ", "Discounted")}</button>
           <button type="button" className={flag === "override" ? "on" : ""} onClick={() => setFlag(flag === "override" ? "" : "override")}><ShieldAlert size={14} /> {L("លក់ពេលអស់ស្តុក", "Out-of-stock sales")}</button>
           <button type="button" className={flag === "refunded" ? "on" : ""} onClick={() => setFlag(flag === "refunded" ? "" : "refunded")}><RotateCcw size={14} /> {L("មានការសងប្រាក់", "Refunded")}</button>
+          <button type="button" disabled={busyX || !rows.length} onClick={download}><Download size={14} /> {busyX ? "…" : "Excel"}</button>
         </div>
       </div>
 

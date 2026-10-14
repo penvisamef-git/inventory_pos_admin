@@ -81,7 +81,10 @@ export async function revoke(reason) {
   const cfg = await getConfig();
   if (!cfg?.device_key) return;
   await setConfig({ device_key: null, last_error: reason, revoked_at: new Date().toISOString(), revoked_reason: reason });
-  await idb.clear(["products", "users", "sessions", "holds"]);
+  // layaways (deposit paid) are kept: the customer's money is in them
+  const keep = (await idb.all("holds")).filter((h) => h.deposit_usd > 0);
+  await idb.clear(["products", "users", "sessions", "holds", "customers"]);
+  for (const h of keep) await idb.put("holds", h);
   await idb.del("kv", "data");
   invalidate();
   changed();
@@ -142,7 +145,13 @@ async function doPull() {
   });
   await idb.putMany("products", rows, { replace: true });
   await idb.putMany("users", d.users.map((u) => ({ ...u, _id: String(u._id) })), { replace: true });
-  const { products: _p, users: _u, ...rest } = d;
+  // customers: the cloud list + the ones added here and not sent yet
+  if (Array.isArray(d.customers)) {
+    const mine = (await idb.all("customers")).filter((c) => !c.synced);
+    const rows = d.customers.map((c) => ({ ...c, _id: String(c._id), cloud_id: String(c._id), text: [c.name, c.code, c.kid_name].join(" ").toLowerCase(), synced: true }));
+    await idb.putMany("customers", [...rows, ...mine], { replace: true });
+  }
+  const { products: _p, users: _u, customers: _c, ...rest } = d;
   await idb.put("kv", { key: "data", value: { ...rest, pulled_at: new Date().toISOString() } });
   await setConfig({ last_pull_at: new Date().toISOString(), device: d.device, warehouse: d.warehouse, last_error: "" });
   // numbers already used by this POS in the cloud (storage cleared, other browser …) → continue after them
@@ -180,6 +189,7 @@ const shiftForCloud = (s) => ({
   counted_khr: s.counted_khr,
   report: s.report,
   note: s.note,
+  cash_moves: s.cash_moves || [],
 });
 
 export const push = () => serial("push", () => oneTab("push", doPush));
@@ -188,6 +198,30 @@ async function doPush() {
   if (!cfg?.device_key) return null;
   const key = cfg.device_key;
   const out = { sent: 0, failed: 0 };
+  // the cloud's new point balances → the local copies
+  const applyPoints = async (r) => {
+    for (const [id, pts] of Object.entries(r?.customer_points || {})) await idb.update("customers", id, (cur) => (cur ? { ...cur, points: pts } : undefined));
+  };
+  // customers added here — before the invoices that use them; afterwards they are kept under the cloud id
+  const newCustomers = (await idb.all("customers")).filter((c) => !c.synced).slice(0, 200);
+  if (newCustomers.length) {
+    const r = await cloud("POST", "/pos-device/push", { key, body: { invoices: [], customers: newCustomers.map((c) => ({ uuid: c.uuid, name: c.name, phone: c.phone, kid_name: c.kid_name, kid_birthday: c.kid_birthday, kid_gender: c.kid_gender })) } });
+    for (const x of r.customers?.saved || []) {
+      const local = newCustomers.find((c) => c.uuid === x.uuid);
+      if (!local) continue;
+      const cloudId = String(x._id);
+      const existing = await idb.get("customers", cloudId);
+      await idb.put("customers", { ...local, ...(existing || {}), _id: cloudId, cloud_id: cloudId, code: x.code || existing?.code || "", synced: true, sync_error: "" });
+      await idb.del("customers", local._id);
+      for (const sl of (await idb.all("sales")).filter((z) => z.customer_local === local._id)) await idb.put("sales", { ...sl, customer_local: cloudId, customer_id: cloudId });
+      for (const rf of (await idb.all("refunds")).filter((z) => z.customer_local === local._id)) await idb.put("refunds", { ...rf, customer_local: cloudId });
+    }
+    for (const f of r.customers?.failed || []) {
+      const local = newCustomers.find((c) => c.uuid === f.uuid);
+      if (local) await idb.put("customers", { ...local, sync_error: f.error });
+    }
+    await applyPoints(r);
+  }
   // sales
   for (let round = 0; round < 20; round++) {
     const list = (await idb.all("sales")).filter((s) => !s.synced && s.state === "paid").sort((a, b) => (a.sold_at < b.sold_at ? -1 : 1)).slice(0, 50);
@@ -195,6 +229,7 @@ async function doPush() {
     const r = await cloud("POST", "/pos-device/push", { key, body: { invoices: list.map(saleForCloud) } });
     const ok = new Set([...r.accepted, ...r.duplicate]);
     const bad = new Map(r.failed.map((f) => [f.uuid, f.error]));
+    await applyPoints(r);
     for (const s of list) {
       if (ok.has(s.uuid)) await idb.put("sales", { ...s, synced: true, synced_at: new Date().toISOString(), sync_error: "" });
       else if (bad.has(s.uuid)) await idb.put("sales", { ...s, sync_error: bad.get(s.uuid) });
@@ -208,11 +243,13 @@ async function doPush() {
   if (refunds.length) {
     const r = await cloud("POST", "/pos-device/push", { key, body: { invoices: [], refunds: refunds.map(({ synced, synced_at, sync_error, ...x }) => x) } });
     const rr = r.refunds || { accepted: [], duplicate: [], failed: [] };
+    await applyPoints(r);
     const ok = new Set([...rr.accepted, ...rr.duplicate]);
     const bad = new Map(rr.failed.map((f) => [f.uuid, f.error]));
     for (const x of refunds) {
-      if (ok.has(x.uuid)) await idb.put("refunds", { ...x, synced: true, synced_at: new Date().toISOString(), sync_error: "" });
-      else if (bad.has(x.uuid)) await idb.put("refunds", { ...x, sync_error: bad.get(x.uuid) });
+      // merge into the current copy (an exchange credit may have been used meanwhile)
+      if (ok.has(x.uuid)) await idb.update("refunds", x.uuid, (cur) => (cur ? { ...cur, synced: true, synced_at: new Date().toISOString(), sync_error: "" } : undefined));
+      else if (bad.has(x.uuid)) await idb.update("refunds", x.uuid, (cur) => (cur ? { ...cur, sync_error: bad.get(x.uuid) } : undefined));
     }
   }
   // login / logout

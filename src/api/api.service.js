@@ -250,6 +250,16 @@ export const saleService = {
   report: (params, opts) => apiClient.get("/sale/report", params, opts),
   shifts: (params, opts) => apiClient.get("/sale/shift", params, opts),
   filters: (params) => apiClient.get("/sale/filters", params),
+  profit: (params, opts) => apiClient.get("/sale/profit", params, opts),
+  slowStock: (params, opts) => apiClient.get("/sale/slow-stock", params, opts),
+};
+
+// What we owe suppliers (posted goods receives − payments)
+export const payableService = {
+  list: (params) => apiClient.get("/purchase/payable", params),
+  get: (supplierId) => apiClient.get(`/purchase/payable/${supplierId}`),
+  pay: (data) => apiClient.post("/purchase/payable/payment", data),
+  voidPayment: (id, reason) => apiClient.put(`/purchase/payable/payment/${id}/void`, { reason }),
 };
 
 export const searchService = {
@@ -272,3 +282,14 @@ export const activityLogService = {
   list: (params, opts) => apiClient.get("/activity_log", params, opts),
   categories: () => apiClient.get("/activity_log/category-all"),
 };
+
+// ================= Customers (loyalty) + promotions =================
+// list params: { q (name / phone / code / child), warehouse_id, birthday_month (1-12), sort: name | points | total_spent | last_visit_at }
+export const customerService = {
+  ...createResource("customer"),
+  birthdays: (days = 7) => apiClient.get("/customer/birthdays", { days }),
+  // { points: +/-, note } — admin / central manager
+  addPoints: (id, data) => apiClient.post(`/customer/${id}/points`, data),
+};
+// list params: { q, type, state: active | upcoming | ended | off }
+export const promotionService = createResource("promotion");

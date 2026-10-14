@@ -1,6 +1,6 @@
 import lazyPage from "./lazyPage";
 import { ACCESS } from "../page/util/permission";
-import { LayoutDashboard, Users, History, User, Settings2, Warehouse, SlidersHorizontal, ArrowRightLeft, Wallet, Package, Ruler, FolderTree, Palette, Shirt, BadgeCheck, Tag, Boxes, PackageSearch, CalendarClock, Truck, PackagePlus, ClipboardPen, ArchiveRestore, ListOrdered, Factory, Send, ClipboardCheck, QrCode, StickyNote, MonitorSmartphone, ReceiptText } from "lucide-react";
+import { LayoutDashboard, Users, History, User, Settings2, Warehouse, SlidersHorizontal, ArrowRightLeft, Wallet, Package, Ruler, FolderTree, Palette, Shirt, BadgeCheck, Tag, Boxes, PackageSearch, CalendarClock, Truck, PackagePlus, ClipboardPen, ArchiveRestore, ListOrdered, Factory, Send, ClipboardCheck, QrCode, StickyNote, MonitorSmartphone, ReceiptText, HeartHandshake, Gift, Tags, HandCoins } from "lucide-react";
 
 import { L } from "../i18n";
 
@@ -19,6 +19,7 @@ const AttributeComponent = lazyPage(() => import("../page/dashboard/product/Attr
 const BrandComponent = lazyPage(() => import("../page/dashboard/product/BrandComponent"));
 const ProductComponent = lazyPage(() => import("../page/dashboard/product/ProductComponent"));
 const PriceComponent = lazyPage(() => import("../page/dashboard/product/PriceComponent"));
+const LabelPrintComponent = lazyPage(() => import("../page/dashboard/product/LabelPrintComponent"));
 const StockBalanceComponent = lazyPage(() => import("../page/dashboard/stock/StockBalanceComponent"));
 const MovementComponent = lazyPage(() => import("../page/dashboard/stock/MovementComponent"));
 const ExpiryComponent = lazyPage(() => import("../page/dashboard/stock/ExpiryComponent"));
@@ -28,7 +29,10 @@ const AdjustmentComponent = lazyPage(() => import("../page/dashboard/stock/Adjus
 const StockCountComponent = lazyPage(() => import("../page/dashboard/stock/StockCountComponent"));
 const OpeningComponent = lazyPage(() => import("../page/dashboard/stock/OpeningComponent"));
 const SupplierComponent = lazyPage(() => import("../page/dashboard/purchase/SupplierComponent"));
+const SupplierDebtComponent = lazyPage(() => import("../page/dashboard/purchase/SupplierDebtComponent"));
 const SalesPage = lazyPage(() => import("../page/dashboard/sale/SalesPage"));
+const CustomerComponent = lazyPage(() => import("../page/dashboard/customer/CustomerComponent"));
+const PromotionComponent = lazyPage(() => import("../page/dashboard/customer/PromotionComponent"));
 const PosDeviceComponent = lazyPage(() => import("../page/dashboard/pos/PosDeviceComponent"));
 const QrCodeComponent = lazyPage(() => import("../page/dashboard/qr/QrCodeComponent"));
 const NoteComponent = lazyPage(() => import("../page/dashboard/note/NoteComponent"));
@@ -70,6 +74,36 @@ class RouteScript {
         access: ACCESS.VIEW_ALL,
         type: "index",
         breadcrumb: [{ name: L("ការលក់", "Sales"), url: null }],
+        child: [],
+      },
+      {
+        // ---------------- Customers (loyalty points) ----------------
+        is_show_sidebar: true,
+        section: "menu",
+        is_can_access_route: true,
+        name: L("អតិថិជន", "Customers"),
+        icon: <HeartHandshake />,
+        component: <CustomerComponent />,
+        url: "customers",
+        subtitle: L("អតិថិជន ពិន្ទុសន្សំ និងខួបកំណើតកូន", "Customers, loyalty points and children's birthdays"),
+        access: ACCESS.VIEW_ALL,
+        type: "index",
+        breadcrumb: [{ name: L("អតិថិជន", "Customers"), url: null }],
+        child: [],
+      },
+      {
+        // ---------------- Promotions (applied by the POS) ----------------
+        is_show_sidebar: true,
+        section: "menu",
+        is_can_access_route: true,
+        name: L("ប្រូម៉ូសិន", "Promotions"),
+        icon: <Gift />,
+        component: <PromotionComponent />,
+        url: "promotions",
+        subtitle: L("ទិញ X ថែម Y ឈុត បញ្ចុះ % តាមប្រភេទ / ម៉ាក Happy hour — POS អនុវត្តដោយខ្លួនឯង", "Buy X get Y, bundles, % off by category / brand, happy hour — the POS applies them by itself"),
+        access: ACCESS.VIEW_ALL,
+        type: "index",
+        breadcrumb: [{ name: L("ប្រូម៉ូសិន", "Promotions"), url: null }],
         child: [],
       },
       {
@@ -180,6 +214,22 @@ class RouteScript {
               breadcrumb: [
                 { name: L("ទំនិញ", "Products"), url: null },
                 { name: L("តម្លៃលក់", "Prices"), url: null },
+              ],
+              child: [],
+            },
+            {
+              is_show_sidebar: true,
+              is_can_access_route: true,
+              name: L("បោះពុម្ពស្លាក", "Print labels"),
+              icon: <Tags size={18} />,
+              component: <LabelPrintComponent />,
+              url: "labels",
+              subtitle: L("ស្លាកតម្លៃ និងបាកូដ (ម៉ាស៊ីនស្លាក ឬក្រដាស A4)", "Price and barcode labels (label printer or A4 sheets)"),
+              access: ACCESS.MASTER,
+              type: "index",
+              breadcrumb: [
+                { name: L("ទំនិញ", "Products"), url: null },
+                { name: L("បោះពុម្ពស្លាក", "Print labels"), url: null },
               ],
               child: [],
             },
@@ -425,6 +475,22 @@ class RouteScript {
               breadcrumb: [
                 { name: L("ការទិញ", "Purchase"), url: null },
                 { name: L("អ្នកផ្គត់ផ្គង់", "Suppliers"), url: null },
+              ],
+              child: [],
+            },
+            {
+              is_show_sidebar: true,
+              is_can_access_route: true,
+              name: L("បំណុលអ្នកផ្គត់ផ្គង់", "Supplier debts"),
+              icon: <HandCoins size={18} />,
+              component: <SupplierDebtComponent />,
+              url: "supplier-debts",
+              subtitle: L("ប្រាក់ដែលយើងនៅជំពាក់ និងការបង់ប្រាក់", "What we owe suppliers, and payments"),
+              access: ACCESS.VIEW_ALL,
+              type: "index",
+              breadcrumb: [
+                { name: L("ការទិញ", "Purchase"), url: null },
+                { name: L("បំណុលអ្នកផ្គត់ផ្គង់", "Supplier debts"), url: null },
               ],
               child: [],
             },

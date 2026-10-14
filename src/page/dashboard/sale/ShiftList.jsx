@@ -4,6 +4,18 @@ import { saleService } from "../../../api/api.service";
 import { L } from "../../../i18n";
 import { usd, khr, nm, dtText, timeText } from "./saleUtil";
 
+const MOVE_NAME = {
+  expense: L("ចំណាយ", "Expense"),
+  safe_drop: L("ដាក់ទូដែក", "To the safe"),
+  float: L("លុយអាប់បន្ថែម", "Change / float"),
+  deposit: L("ប្រាក់កក់", "Layaway deposit"),
+  deposit_back: L("សងប្រាក់កក់", "Deposit back"),
+  deposit_kept: L("ហាងទុកប្រាក់កក់", "Deposit kept"),
+  exchange_cash: L("សងប្រាក់ (ប្តូរ)", "Exchange paid in cash"),
+  other: L("ផ្សេងៗ", "Other"),
+};
+const timeOnly = (d) => (d ? new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Phnom_Penh" }) : "");
+
 const signed = (v, fmt) => (Math.abs(v || 0) < 0.005 ? fmt(0) : `${v > 0 ? "+" : "−"}${fmt(Math.abs(v))}`);
 
 // Cash drawer shifts sent by the POS: float, sales, expected vs counted cash at closing
@@ -118,6 +130,17 @@ export default function ShiftList({ params, tick, portal }) {
                   </div>
                   {open.note && <p className="sl-muted">{open.note}</p>}
                 </>
+              )}
+              {(open.cash_moves || []).length > 0 && (
+                <div className="sl-totals sl-moves">
+                  <div className="sl-grand"><span>{L("ដាក់ / ដកលុយ (ក្រៅពីលក់)", "Cash in / out (not sales)")}</span><span /></div>
+                  {open.cash_moves.map((m) => (
+                    <div key={m.uuid}>
+                      <span>{m.type === "out" ? "↑" : "↓"} {MOVE_NAME[m.kind] || m.kind}{m.note ? ` · ${m.note}` : ""}<small className="sl-muted"> · {timeOnly(m.at)} · {m.by_name}{m.approved_by_name ? ` ✓ ${m.approved_by_name}` : ""}</small></span>
+                      <span className={m.type === "out" ? "sl-neg" : ""}>{m.type === "out" ? "−" : "+"}{m.currency === "KHR" ? khr(m.amount) : usd(m.amount)}</span>
+                    </div>
+                  ))}
+                </div>
               )}
               {open.state !== "closed" && <p className="sl-muted">{L("វេននេះនៅបើក — លទ្ធផលនឹងមកពេល POS បិទវេន។", "This shift is still open — the totals arrive when the POS closes it.")}</p>}
             </div>

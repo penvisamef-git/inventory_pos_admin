@@ -40,6 +40,11 @@ Access levels per screen: `ACCESS.ALL | MASTER | PRODUCT | VIEW_ALL | ADMIN` (`s
 | ទំនិញ (Products): product list, prices, categories, units, attributes, brands | `/product/item`, `/product/price`, `/product/category`, `/product/unit`, `/product/attribute`, `/product/brand` | view: web roles · edit: admin, central manager |
 | ស្តុក (Stock): on hand, transfers, goods receive, adjustments, stock count, near expiry, movements, opening stock | `/stock/...` | view: web roles (goods receive: central roles) · shop manager: own shop, request / receive transfers, draft adjustments |
 | ការទិញ (Purchase): suppliers | `/purchase/supplier` | edit: admin, central manager |
+| បំណុលអ្នកផ្គត់ផ្គង់ (Supplier debts) | `/purchase/supplier-debts` | admin, central manager, accountant (void a payment: admin) |
+| ការលក់ (Sales): report, invoices (+ Excel), cash shifts (+ cash in / out), **Profit** (by product / SKU / category / brand / supplier + Excel), **Slow stock** (dead / slow + Excel) | `/sales` | profit and stock value: users who see all shops |
+| អតិថិជន (Customers): loyalty points, children's birthdays, history, change points | `/customers` | view: web roles · edit: admin, central manager, shop manager (own shops) |
+| ប្រូម៉ូសិន (Promotions): % / $ off, buy X get Y, bundle, bill %, bill $, dates, days, happy hour, shops, members only | `/promotions` | edit: admin, central manager |
+| បោះពុម្ពស្លាក (Print labels): price + Code128 barcode labels, 40×30 … A4 sheets | `/product/labels` | web roles |
 | Telegram: bots, groups / chats, scheduled reports, message text, sent messages | `/telegram#bot` … `#message` | admin |
 | ម៉ាស៊ីន POS (POS devices, in CONNECT): POS computers per shop, pairing code, on / off, re-pair | `/pos-device` | admin, central manager |
 | កូដ QR (QR Code, in CONNECT): public catalog links per shop / warehouse | `/qr` | admin, central manager |
@@ -75,6 +80,8 @@ Phase 1 (master data) and Phase 2 (stock) are complete. Phase 3 (POS) has starte
 ## Payment method QR
 
 Setup → Payment methods: switch **Show a QR for the customer to scan** on and upload the shop's QR picture (`qr_enabled`, `qr_image`, required when on). Both POS show it on the customer display while that method is chosen in Pay.
+
+**Bakong KHQR with the amount** (`online_mode` + `bakong_account_id` `name@bank`, merchant name, city): both POS make the KHQR with the exact amount (`src/page/cloudpos/khqr.js` = `local_pos/src/khqr.js`, checked with the official `bakong-khqr` SDK), show it in Pay and on the customer display, and ask the cloud every 3 s; paid → the sale completes by itself. Needs `BAKONG_TOKEN` in the API (see the API README); without it the cashier confirms by hand.
 
 ## POS receipt style (24)
 

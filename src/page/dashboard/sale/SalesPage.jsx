@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BarChart3, ReceiptText, Wallet, RefreshCw } from "lucide-react";
+import { BarChart3, ReceiptText, Wallet, RefreshCw, TrendingUp, Snail } from "lucide-react";
 import { saleService } from "../../../api/api.service";
 import { L } from "../../../i18n";
 import { usePortal } from "../../portal/portalContext";
@@ -7,6 +7,8 @@ import Select from "../../util/Select";
 import SaleReport from "./SaleReport";
 import SaleList from "./SaleList";
 import ShiftList from "./ShiftList";
+import ProfitReport from "./ProfitReport";
+import SlowStock from "./SlowStock";
 import { PRESETS, presetRange, nm } from "./saleUtil";
 import "../master_data/masterdata.style.css";
 import "../master_data/masterdata.theme.css";
@@ -16,6 +18,8 @@ const TABS = [
   ["report", BarChart3, L("របាយការណ៍", "Report")],
   ["invoice", ReceiptText, L("វិក្កយបត្រ", "Invoices")],
   ["shift", Wallet, L("វេនលុយ", "Cash shifts")],
+  ["profit", TrendingUp, L("ចំណេញ", "Profit"), "cost"],
+  ["slow", Snail, L("ទំនិញលក់យឺត", "Slow stock")],
 ];
 const TAB_KEY = "sale_tab";
 
@@ -66,14 +70,14 @@ function SalesPage() {
   return (
     <div className="md-page sl">
       <div className="sl-tabs">
-        {TABS.map(([k, Icon, label]) => (
+        {TABS.filter((x) => x[3] !== "cost" || opts.cost).map(([k, Icon, label]) => (
           <button key={k} type="button" className={tab === k ? "on" : ""} onClick={() => pickTab(k)}>
             <Icon size={17} /> {label}
           </button>
         ))}
       </div>
 
-      <div className="md-toolbar sl-filters">
+      {tab !== "slow" && <div className="md-toolbar sl-filters">
         <div className="md-toolbar-left">
           <div className="sl-presets">
             {PRESETS.map(([k, label]) => (
@@ -107,11 +111,23 @@ function SalesPage() {
           )}
           <button type="button" className="md-btn md-btn-ghost" onClick={() => setTick((t) => t + 1)} title={L("ផ្ទុកឡើងវិញ", "Refresh")}><RefreshCw size={16} /></button>
         </div>
-      </div>
+      </div>}
+      {tab === "slow" && !portal && (
+        <div className="md-toolbar sl-filters">
+          <div className="md-toolbar-left">
+            <Select className="md-filter" value={f.warehouse_id} onChange={(e) => set("warehouse_id", e.target.value)}>
+              <option value="">{L("-- គ្រប់ហាង --", "-- All shops --")}</option>
+              {(opts.shops || []).filter((w) => w.type !== "central").map((w) => <option key={w._id} value={w._id}>{w.code} · {nm(w)}</option>)}
+            </Select>
+          </div>
+        </div>
+      )}
 
       {tab === "report" && <SaleReport params={params} tick={tick} cost={opts.cost} portal={!!portal} onPick={(k, v) => set(k, v)} onOpenInvoices={() => pickTab("invoice")} />}
       {tab === "invoice" && <SaleList params={params} tick={tick} cost={opts.cost} portal={!!portal} />}
       {tab === "shift" && <ShiftList params={params} tick={tick} portal={!!portal} />}
+      {tab === "profit" && opts.cost && <ProfitReport params={params} tick={tick} />}
+      {tab === "slow" && <SlowStock warehouseId={f.warehouse_id} tick={tick} cost={opts.cost} portal={!!portal} />}
     </div>
   );
 }

@@ -1,0 +1,240 @@
+/* Label printing */
+.lb-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.lb-pick,
+.lb-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.lb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.lb-row > :not(svg):not(button) {
+  flex: 1;
+  min-width: 160px;
+}
+
+.lb-search {
+  width: 100%;
+}
+
+.lb-found,
+.lb-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 34vh;
+  overflow-y: auto;
+}
+
+.lb-found-row,
+.lb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-light);
+  border-radius: calc(10px * var(--ui-radius, 1));
+  background: var(--color-background-card);
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: left;
+}
+
+.lb-found-row {
+  cursor: pointer;
+}
+
+.lb-found-row:hover {
+  border-color: var(--color-primary-main);
+}
+
+.lb-found-row span,
+.lb-item span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lb-found-row small,
+.lb-item small {
+  color: var(--color-text-light);
+  font-size: 12px;
+}
+
+.lb-found-row em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.lb-h {
+  margin: 4px 0 0;
+}
+
+.lb-copies {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--ui-pill, 999px);
+}
+
+.lb-copies button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.lb-copies input {
+  width: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: center;
+}
+
+.lb-show {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lb-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border-radius: calc(12px * var(--ui-radius, 1));
+  background: #e9ecef;
+}
+
+/* one label (same on screen and paper) */
+.lb-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6mm;
+  padding: 1.5mm 2mm;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+  font-family: "Kantumruy Pro", "Plus Jakarta Sans", sans-serif;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.lb-shop {
+  font-size: 2.2mm;
+  font-weight: 700;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+
+.lb-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 2.8mm;
+  font-weight: 700;
+  line-height: 1.2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.lb-price {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5mm;
+}
+
+.lb-price b {
+  font-size: 4.4mm;
+}
+
+.lb-price span {
+  font-size: 2.6mm;
+  font-weight: 700;
+}
+
+.lb-price small {
+  font-size: 2.2mm;
+}
+
+.lb-code {
+  font-family: "Courier New", monospace;
+  font-size: 2.3mm;
+}
+
+.lb-label.small .lb-name {
+  font-size: 2.4mm;
+  -webkit-line-clamp: 1;
+}
+
+.lb-label.small .lb-price b {
+  font-size: 3.6mm;
+}
+
+.lb-bars {
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+/* paper (only while printing labels) */
+.lb-print {
+  display: none;
+}
+
+@media print {
+  body.lb-printing > *:not(.lb-print) {
+    display: none !important;
+  }
+  body.lb-printing .lb-print {
+    display: block !important;
+  }
+  .lb-print .lb-label {
+    box-shadow: none;
+  }
+  .lb-page-roll {
+    page-break-after: always;
+    break-after: page;
+  }
+  .lb-sheet {
+    display: grid;
+    justify-content: center;
+    align-content: start;
+    padding-top: 12mm;
+    page-break-after: always;
+    break-after: page;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@media (max-width: 900px) {
+  .lb-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.lb-select { width: 100%; min-width: 0; }

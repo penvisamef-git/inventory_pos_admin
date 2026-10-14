@@ -134,6 +134,7 @@ export default function CustomerDisplay() {
               <Two className="cd-qr-title" kh="ស្កេនដើម្បីបង់ប្រាក់" en="Scan to pay" />
               <div className="cd-qr-card">
                 <img src={d.pay.qr.image} alt="QR" />
+                {d.pay.qr.paid && <div className="cd-qr-paid">✓</div>}
               </div>
               <div className="cd-qr-amount">
                 <span>{d.pay.qr.name}</span>
@@ -168,8 +169,17 @@ export default function CustomerDisplay() {
 
           <section className="cd-side">
             {company && <div className="cd-side-shop">{company}</div>}
+            {d.customer && (
+              <div className="cd-member">
+                <span>👋 {d.customer.name}</span>
+                <b>⭐ {d.customer.points}</b>
+              </div>
+            )}
             <div className="cd-lines">
               <div><Two kh="សរុបរង" en="Subtotal" /><span>{usd(d.subtotal)}</span></div>
+              {(d.promotions || []).map((p, k) => (
+                <div key={k} className="cd-promo"><span>🎁 {p.name_kh}{p.name_en && p.name_en !== p.name_kh ? <small> · {p.name_en}</small> : null}</span><span>−{usd(p.amount)}</span></div>
+              ))}
               {d.discount_total > 0 && <div className="cd-disc"><Two kh="បញ្ចុះតម្លៃ" en="Discount" /><span>−{usd(d.discount_total)}</span></div>}
               {d.tax > 0 && <div><Two kh={d.tax_name || "ពន្ធ"} en={d.tax_inclusive ? "incl." : "Tax"} /><span>{usd(d.tax)}</span></div>}
             </div>
@@ -225,6 +235,13 @@ export default function CustomerDisplay() {
               </div>
             )}
           </div>
+          {d.promo_total > 0 && <div className="cd-saved"><Two kh={`អ្នកសន្សំបាន ${usd(d.promo_total)}`} en={`You saved ${usd(d.promo_total)}`} /></div>}
+          {d.customer && (
+            <div className="cd-saved cd-earned">
+              <Two kh={`${d.customer.name} ទទួលបាន +${d.customer.earned || 0} ពិន្ទុ`} en={`${d.customer.name} earned +${d.customer.earned || 0} points`} />
+              {d.customer.points !== null && d.customer.points !== undefined && <b>⭐ {d.customer.points}</b>}
+            </div>
+          )}
           <Two className="cd-again" kh="សូមអញ្ជើញមកម្តងទៀត" en="Please come again" />
           {d.invoice_no && <small className="cd-inv">{d.invoice_no}</small>}
         </div>

@@ -471,3 +471,50 @@
     transform: none;
   }
 }
+
+/* ---------- member + promotions ---------- */
+.cd-member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -0.6vh 0 1.4vh;
+  padding: 1vh 1.2vw;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 1.05em;
+}
+
+.cd-member b {
+  color: var(--pos-gold-bright, #ffd27a);
+}
+
+.cd-promo {
+  color: var(--pos-gold-bright, #ffd27a);
+}
+
+.cd-promo small {
+  opacity: 0.8;
+}
+
+.cd-saved {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  margin-top: 1.6vh;
+  padding: 1vh 1.6vw;
+  border-radius: 999px;
+  background: var(--pos-gold-soft, #fff4dd);
+  color: var(--pos-gold-text, #8a5a00);
+  font-weight: 700;
+}
+
+.cd-earned b {
+  font-size: 1.2em;
+}
+
+.cd-lines > div > span:last-child {
+  white-space: nowrap;
+}
+
+.cd-qr-card { position: relative; }
+.cd-qr-paid { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255, 255, 255, 0.85); color: #16a34a; font-size: 96px; font-weight: 800; border-radius: inherit; }

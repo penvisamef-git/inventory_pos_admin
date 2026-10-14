@@ -2217,3 +2217,289 @@ button.pos-warnbar {
   background: #fff;
   object-fit: contain;
 }
+
+/* ---------- customer (loyalty) + promotions ---------- */
+.pos-cust-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 190px;
+  height: 30px;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px dashed var(--pos-mint);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--pos-green-dark);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.pos-cust-btn.on {
+  border-style: solid;
+  border-color: var(--pos-green);
+  background: var(--pos-green-soft);
+}
+
+.pos-cust-btn em {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-style: normal;
+  color: var(--pos-gold-text);
+}
+
+.pos-line-promo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pos-sum-promo {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.pos-sum-promo span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pos-custdlg {
+  width: min(560px, 96vw);
+}
+
+.pos-cust-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--pos-line);
+  border-radius: 12px;
+  color: var(--pos-muted);
+}
+
+.pos-cust-search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+}
+
+.pos-cust-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 46vh;
+  margin-top: 10px;
+  overflow-y: auto;
+}
+
+.pos-cust-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--pos-line);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pos-cust-row:hover,
+.pos-cust-row.on {
+  border-color: var(--pos-green);
+  background: var(--pos-green-soft);
+}
+
+.pos-cust-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pos-cust-main small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--pos-muted);
+}
+
+.pos-cust-new {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--pos-gold-soft);
+  color: var(--pos-gold-text);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.pos-cust-pts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  color: var(--pos-gold-text);
+}
+
+.pos-cust-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pos-cust-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--pos-muted);
+}
+
+.pos-cust-form input {
+  height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--pos-line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--pos-text);
+}
+
+.pos-cust-form .pos-error {
+  grid-column: 1 / -1;
+}
+
+.pos-cust-gender {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.pos-cust-gender button {
+  flex: 1;
+  height: 44px;
+  border: 1.5px solid var(--pos-line);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pos-cust-gender button.on {
+  border-color: var(--pos-green);
+  background: var(--pos-green-soft);
+  color: var(--pos-green-dark);
+  font-weight: 700;
+}
+
+.pos-pts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--pos-gold-line);
+  border-radius: 12px;
+  background: var(--pos-gold-soft);
+}
+
+.pos-pts > div:first-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-pts b {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--pos-gold-text);
+}
+
+.pos-pts small {
+  color: var(--pos-muted);
+}
+
+.pos-pts-use {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.pos-pts-use input {
+  width: 90px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1.5px solid var(--pos-gold-line);
+  border-radius: 8px;
+  font: inherit;
+  text-align: right;
+}
+
+.pos-pts .pos-error {
+  flex-basis: 100%;
+}
+
+/* Bakong KHQR with the amount */
+.pos-pay-qr.pos-khqr { align-items: flex-start; }
+.pos-pay-qr.pos-khqr img { width: 128px; height: 128px; }
+.pos-pay-qr.pos-khqr span { display: flex; flex-direction: column; gap: 4px; }
+.pos-pay-qr.pos-khqr b { font-size: 15px; }
+.pos-pay-qr.pos-khqr.paid { border-style: solid; }
+.pos-pay-qr.pos-khqr.expired img { opacity: 0.3; }
+.pos-pay-qr.pos-khqr.manual, .pos-pay-qr.pos-khqr.expired { border-color: #e0a100; background: #fff8e1; color: #7a5600; }
+
+/* cash in / out, layaway, exchange */
+.pos-cashdlg { width: min(560px, 96vw); }
+.pos-seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--pos-text); cursor: pointer; font-family: inherit; }
+.pos-seg button.on.out { background: #d92d20; color: #fff; }
+.pos-seg { flex-shrink: 0; }
+.pos-seg.small { flex: 0 0 auto; }
+.pos-seg.small button { width: 48px; height: 46px; flex: 0 0 auto; }
+.pos-cash-amt { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+.pos-cash-amt > input { flex: 1; min-width: 140px; height: 48px; padding: 0 14px; font-size: 22px; font-weight: 700; border: 1px solid var(--pos-line, #dfe6e2); border-radius: 12px; background: var(--pos-card, #fff); color: inherit; }
+.pos-cash-amt .pos-quick { width: 100%; }
+.pos-cash-now { margin: 10px 0 4px; }
+.pos-cash-list { display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow: auto; margin-top: 6px; }
+.pos-cash-list > div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; border-radius: 9px; background: var(--pos-soft, #f6f8f7); font-size: 13px; }
+.pos-cash-list > div span { display: flex; flex-direction: column; }
+.pos-cash-list > div small { opacity: 0.7; }
+.pos-cash-list > div.out b { color: #b42318; }
+.pos-cash-list > div.in b { color: var(--pos-green-dark, #166534); }
+.pos-lay-toggle { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--pos-line, #dfe6e2); border-radius: 12px; cursor: pointer; }
+.pos-lay-toggle span { display: flex; flex-direction: column; }
+.pos-lay-toggle small { opacity: 0.7; font-size: 12px; }
+.pos-lay-toggle.on { border-style: solid; border-color: var(--pos-green, #1f7a4d); background: var(--pos-green-soft, #eaf6ef); }
+.pos-hold-wrap.lay { border-left: 3px solid #e0a100; padding-left: 6px; }
+.pos-lay-tag { display: inline-flex; align-items: center; gap: 3px; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: #fff3cd; color: #7a5600; font-size: 11px; font-style: normal; font-weight: 600; }
+.pos-lay-dep { color: #7a5600; font-weight: 600; }
+.pos-lay-cancel, .pos-lay-more { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 10px 44px; padding: 10px; border-radius: 10px; background: var(--pos-soft, #f6f8f7); font-size: 13px; }
+.pos-lay-cancel label { display: flex; gap: 6px; align-items: center; width: 100%; }
+.pos-lay-more input { width: 130px; height: 38px; padding: 0 10px; border: 1px solid var(--pos-line, #dfe6e2); border-radius: 9px; font: inherit; background: var(--pos-card, #fff); color: inherit; }
+.pos-lay-deps { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px 44px; font-size: 12px; opacity: 0.75; }
+.pos-lay-deps span { padding: 1px 8px; border-radius: 999px; background: var(--pos-soft, #f1f5f3); }
+.pos-credit { display: flex; align-items: center; gap: 10px; margin: 6px 12px 0; padding: 8px 12px; border-radius: 12px; background: #e8f1ff; color: #1d4ed8; }
+.pos-credit span { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.pos-credit small { opacity: 0.8; font-size: 12px; }
+.pos-credit.lay { background: #fff3cd; color: #7a5600; }
+.pos-credit-pay { display: flex; justify-content: space-between; align-items: center; }
+.pos-rf-mode { margin: 10px 0; }
+.pos-zmoves { margin-top: 8px; }

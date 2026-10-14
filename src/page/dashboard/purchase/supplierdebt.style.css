@@ -1,0 +1,26 @@
+.sd-sum { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.sd-sum > div, .sd-tiles > div { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--md-card, #fff); border: 1px solid var(--md-border, #e3e8e5); }
+.sd-sum span, .sd-tiles span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; opacity: 0.7; }
+.sd-sum b { font-size: 22px; }
+.sd-sum small { font-size: 12px; opacity: 0.65; }
+.sd-sum .due, .sd-tiles .due { border-color: var(--md-primary, #1f7a4d); }
+.sd-sum .late, .sd-tiles .late { border-color: #f04438; background: #fef3f2; color: #b42318; }
+.sd-check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.sd-table .r { text-align: right; white-space: nowrap; }
+.sd-table td.late, .sd-table .md-sub.late { color: #b42318; }
+.sd-table tr.late td { background: #fff5f4; }
+.sd-table tr.done td, .sd-table tr.void td { opacity: 0.55; }
+.sd-table tr.void td b { text-decoration: line-through; }
+.sd-click tbody tr { cursor: pointer; }
+.sd-click tbody tr:hover td { background: var(--md-hover, #f4f8f6); }
+.sd-detail { width: min(1080px, 96vw); }
+.sd-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.sd-tiles b { font-size: 18px; }
+.sd-line { margin: 10px 0; font-size: 13px; opacity: 0.8; }
+.sd-pay { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border-radius: 12px; background: var(--md-hover, #f4f8f6); margin-bottom: 12px; }
+.sd-pay input, .sd-pay select { height: 36px; padding: 0 10px; border: 1px solid var(--md-border, #d8dfdb); border-radius: 9px; background: var(--md-card, #fff); color: inherit; font: inherit; }
+.sd-pay input[type="number"] { width: 120px; }
+.sd-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.sd-cols h4 { margin: 4px 0 8px; }
+.sd-void { padding: 2px 8px; font-size: 12px; color: #b42318; }
+@media (max-width: 800px) { .sd-tiles, .sd-cols { grid-template-columns: 1fr 1fr; } .sd-cols { grid-template-columns: 1fr; } }

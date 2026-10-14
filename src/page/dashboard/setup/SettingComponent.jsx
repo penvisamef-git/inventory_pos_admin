@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Building2, ImagePlus, Percent, Receipt, Save, Boxes, X, Palette, Check } from "lucide-react";
+import { Building2, ImagePlus, Percent, Receipt, Save, Boxes, X, Palette, Check, Star } from "lucide-react";
 import { SKIN_LIST } from "../../theme/themes";
 import ReceiptStylePicker from "../pos/ReceiptStylePicker";
 import { receiptTemplate } from "../../cloudpos/receiptTemplates";
@@ -30,6 +30,10 @@ const EMPTY = {
   expiry_alert_days: 30,
   ui_theme: "forest",
   receipt_template: "classic",
+  loyalty_enabled: true,
+  points_per_usd: 1,
+  point_value_usd: 0.01,
+  min_redeem_points: 100,
 };
 
 function Field({ label, hint, children, full }) {
@@ -151,7 +155,7 @@ function SettingComponent() {
     setError("");
     try {
       const payload = { ...form };
-      ["khr_rounding", "tax_rate", "low_stock_default", "expiry_alert_days"].forEach((k) => {
+      ["khr_rounding", "tax_rate", "low_stock_default", "expiry_alert_days", "points_per_usd", "point_value_usd", "min_redeem_points"].forEach((k) => {
         payload[k] = Number(payload[k]) || 0;
       });
       ["_id", "key", "updated_by", "created_date", "updated_date", "__v"].forEach((k) => delete payload[k]);
@@ -277,6 +281,31 @@ function SettingComponent() {
           </Field>
           <Field label={L("ចុងវិក្កយបត្រ", "Receipt footer")} full>
             <textarea rows={2} value={form.receipt_footer} onChange={set("receipt_footer")} disabled={disabled} />
+          </Field>
+        </div>
+      </section>
+
+      {/* ---------- Loyalty points ---------- */}
+      <section className="st-card">
+        <header>
+          <Star size={18} />
+          <h3>{L("ពិន្ទុសន្សំអតិថិជន", "Customer loyalty points")}</h3>
+        </header>
+        <div className="st-grid">
+          <Field label={L("ប្រើពិន្ទុ", "Points on")} hint={L("អតិថិជនទទួលពិន្ទុរាល់ពេលទិញ ហើយប្រើជាលុយលើ POS", "Customers earn points on every sale and spend them as money on the POS")}>
+            <label className="md-switch">
+              <input type="checkbox" checked={form.loyalty_enabled !== false} onChange={(e) => setForm((f) => ({ ...f, loyalty_enabled: e.target.checked }))} disabled={disabled} />
+              <span className="md-switch-track" />
+            </label>
+          </Field>
+          <Field label={L("ពិន្ទុក្នុង $1", "Points per $1 paid")} hint={L("ឧ. 1 → ទិញ $25 បាន 25 ពិន្ទុ", "e.g. 1 → $25 paid = 25 points")}>
+            <input type="number" min="0" step="0.1" value={form.points_per_usd} onChange={set("points_per_usd")} disabled={disabled} />
+          </Field>
+          <Field label={L("តម្លៃ 1 ពិន្ទុ ($)", "Value of 1 point ($)")} hint={L(`ឧ. 0.01 → 100 ពិន្ទុ = $${(100 * (Number(form.point_value_usd) || 0)).toFixed(2)}`, `e.g. 0.01 → 100 points = $${(100 * (Number(form.point_value_usd) || 0)).toFixed(2)}`)}>
+            <input type="number" min="0" step="0.001" value={form.point_value_usd} onChange={set("point_value_usd")} disabled={disabled} />
+          </Field>
+          <Field label={L("ប្រើយ៉ាងតិច (ពិន្ទុ)", "Use at least (points)")}>
+            <input type="number" min="0" step="1" value={form.min_redeem_points} onChange={set("min_redeem_points")} disabled={disabled} />
           </Field>
         </div>
       </section>

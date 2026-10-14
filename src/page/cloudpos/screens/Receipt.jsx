@@ -108,6 +108,9 @@ export function ReceiptPaper({ sale: s, catalog, template }) {
       </div>
       <div className="rc-sum">
         <div><span>{L("សរុបរង", "Subtotal")}</span><span>{usd(s.subtotal)}</span></div>
+        {(s.promotions || []).map((p, k) => (
+          <div key={k}><span>{LANG === "en" ? p.name_en || p.name_kh : p.name_kh}</span><span>−{usd(p.amount)}</span></div>
+        ))}
         {s.discount_total > 0 && <div><span>{L("បញ្ចុះតម្លៃ", "Discount")}{s.discount_type === "percent" ? ` ${s.discount_value}%` : ""}</span><span>−{usd(s.discount_total)}</span></div>}
         {s.tax_mode !== "none" && s.tax_amount > 0 && <div><span>{s.tax_name} {s.tax_rate}%{s.tax_mode === "inclusive" ? ` (${L("រួម", "incl.")})` : ""}</span><span>{usd(s.tax_amount)}</span></div>}
         <div className="rc-total"><span>{L("សរុប", "TOTAL")}</span><span>{usd(s.total)}</span></div>
@@ -121,6 +124,16 @@ export function ReceiptPaper({ sale: s, catalog, template }) {
           <div><span>{L("ប្រាក់អាប់", "Change")}</span><span>{[s.change_give_usd ? usd(s.change_give_usd) : "", s.change_give_khr ? khr(s.change_give_khr) : ""].filter(Boolean).join(" + ") || usd(s.change_usd)}</span></div>
         )}
       </div>
+      {s.customer_name && (
+        <div className="rc-cust">
+          <div><span>{L("អតិថិជន", "Customer")}</span><span>{s.customer_name}</span></div>
+          {s.customer_phone && <div><span>{L("ទូរស័ព្ទ", "Phone")}</span><span>{s.customer_phone}</span></div>}
+          {s.points_redeemed > 0 && <div><span>{L("ពិន្ទុបានប្រើ", "Points used")}</span><span>−{s.points_redeemed}</span></div>}
+          <div><span>{L("ពិន្ទុទទួលបាន", "Points earned")}</span><span>+{s.points_earned || 0}</span></div>
+          {s.points_balance !== null && s.points_balance !== undefined && <div className="rc-cust-bal"><span>{L("ពិន្ទុសរុប", "Points balance")}</span><span>{s.points_balance}</span></div>}
+        </div>
+      )}
+      {s.promo_total > 0 && <div className="rc-saved"><b>{L(`អ្នកសន្សំបាន ${usd(s.promo_total + (s.discount_total || 0))}`, `You saved ${usd(s.promo_total + (s.discount_total || 0))}`)}</b></div>}
       <div className="rc-foot">
         <span>1$ = {khr(s.rate)}</span>
         {st.receipt_footer && <b>{st.receipt_footer}</b>}

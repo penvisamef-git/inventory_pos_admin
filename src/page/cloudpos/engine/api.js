@@ -100,6 +100,55 @@ async function managerApproval(approver) {
 }
 
 const openShift = async () => (await idb.all("shifts")).find((s) => s.state === "open") || null;
+// ---------------- customers (loyalty) ----------------
+const POINTS_METHOD = { _id: "points", code: "points", name_kh: "ពិន្ទុ", name_en: "Points", type: "points", currency: "USD" };
+const DEPOSIT_METHOD = { _id: "deposit", code: "deposit", name_kh: "ប្រាក់កក់", name_en: "Deposit", type: "credit", currency: "USD" };
+const EXCHANGE_METHOD = { _id: "exchange", code: "exchange", name_kh: "ប្តូរទំនិញ", name_en: "Exchange credit", type: "credit", currency: "USD" };
+const MOVE_KINDS = { out: ["expense", "safe_drop", "other"], in: ["float", "other"] };
+const managerOf = async (me_, approver) => (me_.is_manager ? { _id: me_.user_id, name: me_.name } : managerApproval(approver));
+// money in / out of the drawer that is not a sale (the shift goes to the cloud again)
+async function addCashMove(shift, me_, m, by = null) {
+  const rate = Number((await sync.getData())?.rate?.rate) || 4100;
+  const currency = m.currency === "KHR" ? "KHR" : "USD";
+  const amount = currency === "KHR" ? Math.round(m.amount) : r2(m.amount);
+  const move = { uuid: uuid(), type: m.type, kind: m.kind, category: String(m.category || "").slice(0, 40), amount, currency, amount_usd: currency === "KHR" ? r2(amount / rate) : amount, note: String(m.note || "").trim().slice(0, 200), ref: String(m.ref || "").slice(0, 60), by: me_.user_id, by_name: me_.name, approved_by_name: by?.name || "", at: now() };
+  await idb.update("shifts", shift._id, (cur) => (cur ? { ...cur, cash_moves: [...(cur.cash_moves || []), move], synced: false, updated_at: now() } : undefined));
+  return move;
+}
+async function takeDeposit(h, shift, me_, amount, currency) {
+  const move = await addCashMove(shift, me_, { type: "in", kind: "deposit", amount, currency, note: `${L2("កក់ប្រាក់", "Layaway deposit")} #${h.hold_no} ${h.label || ""}`.trim(), ref: h._id });
+  await idb.update("holds", h._id, (cur) => (cur ? { ...cur, deposit_usd: r2((cur.deposit_usd || 0) + move.amount_usd), deposits: [...(cur.deposits || []), { amount: move.amount, currency: move.currency, amount_usd: move.amount_usd, at: move.at, shift_no: shift.shift_no, by_name: me_.name }] } : undefined));
+  sync.push().catch(() => {});
+}
+const phoneOf = (v) => {
+  let d = String(v || "").replace(/\D/g, "");
+  if (d.startsWith("855")) d = `0${d.slice(3)}`;
+  if (d && !d.startsWith("0")) d = `0${d}`;
+  return d.length >= 8 && d.length <= 11 ? d : null;
+};
+// points shown = cloud balance + what this POS changed and has not sent yet
+async function pendingPoints(localId) {
+  const [sales, refunds] = await Promise.all([idb.all("sales"), idb.all("refunds")]);
+  return (
+    sales.filter((x) => x.customer_local === localId && !x.synced && x.state === "paid").reduce((t, x) => t + (x.points_earned || 0) - (x.points_redeemed || 0), 0) +
+    refunds.filter((x) => x.customer_local === localId && !x.synced).reduce((t, x) => t + (x.points_delta || 0), 0)
+  );
+}
+const customerView = async (c) => ({ _id: c._id, cloud_id: c.cloud_id || null, code: c.code || "", name: c.name, phone: c.phone, kid_name: c.kid_name || "", kid_birthday: c.kid_birthday || "", kid_gender: c.kid_gender || "", points: (c.points || 0) + (await pendingPoints(c._id)), not_sent: !c.synced });
+// by id; a customer added here moves from "u:<uuid>" to the cloud id once sent — still found by its uuid
+async function findCustomer(id) {
+  const c = await idb.get("customers", String(id));
+  if (c || !String(id).startsWith("u:")) return c || null;
+  const u = String(id).slice(2);
+  return (await idb.all("customers")).find((x) => x.uuid === u) || null;
+}
+const loyaltyOf = (data) => ({
+  enabled: data?.setting?.loyalty_enabled !== false,
+  points_per_usd: Number(data?.setting?.points_per_usd ?? 1),
+  point_value_usd: Number(data?.setting?.point_value_usd ?? 0.01),
+  min_redeem_points: Number(data?.setting?.min_redeem_points ?? 100),
+});
+
 const findSale = async (id) => (await idb.get("sales", String(id))) || (await idb.all("sales")).find((s) => s.invoice_no === String(id)) || null;
 
 // ---------------- customer display (same browser: BroadcastChannel) ----------------
@@ -159,7 +208,22 @@ async function shiftTotals(shift) {
   });
   const salesTotal = r2(mine.reduce((t, s) => t + s.total, 0));
   const refundTotal = r2(rf.reduce((t, r) => t + r.total, 0));
+  const moves = shift.cash_moves || [];
+  const sumMoves = (type, cur) => moves.filter((m) => m.type === type && (m.currency === "KHR") === (cur === "KHR")).reduce((t, m) => t + m.amount, 0);
+  const cash = { in_usd: r2(sumMoves("in", "USD")), in_khr: Math.round(sumMoves("in", "KHR")), out_usd: r2(sumMoves("out", "USD")), out_khr: Math.round(sumMoves("out", "KHR")) };
+  cashUsd += cash.in_usd - cash.out_usd;
+  cashKhr += cash.in_khr - cash.out_khr;
+  const byKind = {};
+  moves.forEach((m) => {
+    const k = `${m.type}:${m.kind}`;
+    if (!byKind[k]) byKind[k] = { type: m.type, kind: m.kind, count: 0, amount_usd: 0 };
+    byKind[k].count += 1;
+    byKind[k].amount_usd = r2(byKind[k].amount_usd + (m.amount_usd || 0));
+  });
   return {
+    cash_moves: cash,
+    cash_move_kinds: Object.values(byKind),
+    cash_move_count: moves.length,
     refund_count: rf.length,
     refund_total: refundTotal,
     refund_methods: Object.values(refundMethods),
@@ -331,6 +395,31 @@ export const api = {
     return s;
   },
 
+  // ---------------- cash in / out ----------------
+  async cashMove(b = {}) {
+    const me_ = await me();
+    const shift = await openShift();
+    if (!shift) fail("សូមបើកវេនសិន / Open a shift first", 409);
+    const type = b.type === "in" ? "in" : b.type === "out" ? "out" : null;
+    if (!type) fail("in / out?");
+    const kind = MOVE_KINDS[type].includes(b.kind) ? b.kind : "other";
+    const amount = Number(b.amount);
+    if (!(amount > 0) || amount > 1e9) fail("ចំនួនខុស / Wrong amount");
+    if (!String(b.note || "").trim()) fail("សូមសរសេរមូលហេតុ / Write what it is for");
+    let by = null;
+    if (type === "out") {
+      by = await managerOf(me_, b.approver);
+      const t = await shiftTotals(shift);
+      const want = b.currency === "KHR" ? Math.round(amount) : r2(amount);
+      const have = b.currency === "KHR" ? t.expected_khr : t.expected_usd;
+      if (want > have + 0.004) fail(`${L2("ក្នុងថតមិនគ្រប់", "Not that much in the drawer")} (${b.currency === "KHR" ? `${have}៛` : `$${have.toFixed(2)}`})`);
+    }
+    const move = await addCashMove(shift, me_, { type, kind, category: b.category, amount, currency: b.currency, note: b.note }, by);
+    sync.push().catch(() => {});
+    const fresh = await idb.get("shifts", shift._id);
+    return { move, shift: { ...fresh, totals: await shiftTotals(fresh) } };
+  },
+
   // ---------------- hold ----------------
   async holds() {
     await me();
@@ -347,19 +436,116 @@ export const api = {
     const { ymd } = sync.yymm();
     const no = await idb.nextSeq(`H${ymd}`);
     const discount = b.discount && Number(b.discount.value) > 0 ? { type: b.discount.type === "percent" ? "percent" : "amount", value: Number(b.discount.value) } : null;
-    const h = { _id: uuid(), hold_no: no, label: String(b.label || "").trim().slice(0, 60), items, discount, note: String(b.note || "").slice(0, 200), total: r2(Number(b.total) || 0), user_id: me_.user_id, user_name: me_.name, created_date: now() };
+    const customer = b.customer_id ? await findCustomer(b.customer_id) : null;
+    let shift = null;
+    const dep = b.deposit && Number(b.deposit.amount) > 0 ? { amount: Number(b.deposit.amount), currency: b.deposit.currency === "KHR" ? "KHR" : "USD" } : null;
+    if (dep) {
+      shift = await openShift();
+      if (!shift) fail("សូមបើកវេនសិន / Open a shift first", 409);
+      if (!customer && !String(b.label || "").trim()) fail("កក់ប្រាក់: សូមជ្រើសអតិថិជន ឬសរសេរឈ្មោះ / Deposit: choose the customer or write a name");
+    }
+    const h = { _id: uuid(), hold_no: no, label: String(b.label || customer?.name || "").trim().slice(0, 60), items, discount, note: String(b.note || "").slice(0, 200), total: r2(Number(b.total) || 0), user_id: me_.user_id, user_name: me_.name, created_date: now(), customer_id: customer?._id || null, customer_uuid: customer?.uuid || null, customer_name: customer?.name || "", customer_phone: customer?.phone || "", deposit_usd: 0, deposits: [] };
     await idb.put("holds", h);
-    return h;
+    if (dep) await takeDeposit(h, shift, me_, dep.amount, dep.currency);
+    return idb.get("holds", h._id);
   },
-  async unhold(id) {
+  async holdDeposit(id, b = {}) {
+    const me_ = await me();
+    const h = await idb.get("holds", String(id));
+    if (!h) fail("រកមិនឃើញ / Held cart not found", 404);
+    const shift = await openShift();
+    if (!shift) fail("សូមបើកវេនសិន / Open a shift first", 409);
+    if (!(Number(b.amount) > 0)) fail("ចំនួនខុស / Wrong amount");
+    await takeDeposit(h, shift, me_, Number(b.amount), b.currency === "KHR" ? "KHR" : "USD");
+    return idb.get("holds", h._id);
+  },
+  // resume: a plain hold leaves the list; a layaway (deposit paid) stays until its sale is done
+  async resumeHold(id) {
     await me();
     const h = await idb.get("holds", String(id));
     if (!h) fail("រកមិនឃើញ / Held cart not found", 404);
+    if (!(h.deposit_usd > 0)) await idb.del("holds", h._id);
+    const c = h.customer_id ? (await findCustomer(h.customer_id)) || (h.customer_uuid ? await findCustomer(`u:${h.customer_uuid}`) : null) : null;
+    return { ...h, customer: c ? await customerView(c) : null };
+  },
+  // delete: a layaway gives the deposit back from the drawer (manager) — { approver, give_back }
+  async unhold(id, b = {}) {
+    const me_ = await me();
+    const h = await idb.get("holds", String(id));
+    if (!h) fail("រកមិនឃើញ / Held cart not found", 404);
+    if (h.deposit_usd > 0) {
+      const by = await managerOf(me_, b?.approver);
+      const shift = await openShift();
+      if (!shift) fail("សូមបើកវេនសិន / Open a shift first", 409);
+      if (b?.give_back !== false) {
+        const byCur = {};
+        (h.deposits || []).forEach((d) => (byCur[d.currency] = (byCur[d.currency] || 0) + d.amount));
+        for (const [currency, amount] of Object.entries(byCur)) {
+          await addCashMove(shift, me_, { type: "out", kind: "deposit_back", amount, currency, note: `${L2("សងប្រាក់កក់", "Deposit back")} #${h.hold_no} ${h.label || ""}`.trim(), ref: h._id }, by);
+        }
+      } else {
+        await addCashMove(shift, me_, { type: "in", kind: "deposit_kept", amount: 0, currency: "USD", note: `${L2("ហាងទុកប្រាក់កក់", "Deposit kept")} #${h.hold_no} ($${h.deposit_usd.toFixed(2)})`, ref: h._id }, by);
+      }
+      sync.push().catch(() => {});
+    }
     await idb.del("holds", h._id);
     return h;
   },
 
   // ---------------- sell ----------------
+  // ---------------- customers ----------------
+  async customers(q = "") {
+    await me();
+    const t = String(q || "").trim();
+    const digits = t.replace(/\D/g, "");
+    const all = await idb.all("customers");
+    let rows = [];
+    if (digits.length >= 3 && digits.length === t.replace(/[\s+-]/g, "").length) {
+      const d = digits.replace(/^855/, "0");
+      rows = all.filter((c) => String(c.phone || "").includes(d));
+    } else if (t.length >= 2) {
+      const low = t.toLowerCase();
+      rows = all.filter((c) => (c.text || `${c.name} ${c.code} ${c.kid_name}`.toLowerCase()).includes(low));
+    }
+    rows.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+    return Promise.all(rows.slice(0, 20).map(customerView));
+  },
+  async customer(id) {
+    await me();
+    const c = await findCustomer(id);
+    if (!c) fail("រកមិនឃើញអតិថិជន / Customer not found", 404);
+    return customerView(c);
+  },
+  // Bakong KHQR: ask the cloud (it holds the Bakong token) whether this QR is paid
+  async khqrCheck(md5) {
+    await me();
+    const cfg = await sync.getConfig();
+    if (!cfg?.device_key) return { ready: false, paid: false };
+    try {
+      return await sync.cloud("POST", "/pos-device/khqr/check", { key: cfg.device_key, body: { md5 } });
+    } catch (e) {
+      return { ready: true, paid: false, offline: !!e.offline, error: e.message };
+    }
+  },
+  async addCustomer(b = {}) {
+    await me();
+    await paired();
+    const name = String(b.name || "").trim().slice(0, 80);
+    const phone = phoneOf(b.phone);
+    if (!name) fail("សូមបញ្ចូលឈ្មោះ / Name is required");
+    if (!phone) fail("លេខទូរស័ព្ទមិនត្រឹមត្រូវ / Wrong phone number");
+    const kidBirthday = String(b.kid_birthday || "").slice(0, 10);
+    if (kidBirthday && !/^\d{4}-\d{2}-\d{2}$/.test(kidBirthday)) fail("ថ្ងៃកំណើតខុស / Wrong birthday");
+    const same = (await idb.all("customers")).find((c) => c.phone === phone);
+    if (same) fail(`លេខនេះជាអតិថិជនរួចហើយ: ${same.name} / Already a customer: ${same.name}`, 409, { data: await customerView(same) });
+    const id = uuid();
+    const kid = String(b.kid_name || "").trim().slice(0, 80);
+    const c = { _id: `u:${id}`, uuid: id, cloud_id: null, code: "", name, phone, kid_name: kid, kid_birthday: kidBirthday, kid_gender: ["boy", "girl"].includes(b.kid_gender) ? b.kid_gender : "", points: 0, text: [name, kid].join(" ").toLowerCase(), synced: false };
+    await idb.put("customers", c);
+    sync.push().catch(() => {});
+    return customerView(c);
+  },
+
   async sell(b = {}) {
     const me_ = await me();
     const cfg = await paired();
@@ -410,10 +596,44 @@ export const api = {
     let discountBy = null;
     if (discount) discountBy = me_.is_manager ? { _id: me_.user_id, name: me_.name } : await managerApproval(b.approver);
 
-    const totals = priceCart(cart, { discount, setting: data.setting, rate: data.rate });
+    // customer (loyalty)
+    let customer = null;
+    if (b.customer_id) {
+      customer = await findCustomer(b.customer_id);
+      if (!customer) fail("រកមិនឃើញអតិថិជន / Customer not found", 404);
+    }
+    const loyalty = loyaltyOf(data);
+    const balance = customer ? (customer.points || 0) + (await pendingPoints(customer._id)) : 0;
+
+    const totals = priceCart(cart, { discount, setting: data.setting, rate: data.rate, promotions: data.promotions || [], promo: { warehouse_id: data.warehouse?._id, has_customer: !!customer, categories: data.categories } });
     if (totals.error) fail(totals.error);
     const methods = new Map((data.payment_methods || []).map((m) => [String(m._id), m]));
     const pays = [];
+    const redeem = Math.max(0, Math.trunc(Number(b.redeem_points) || 0));
+    let redeemUsd = 0;
+    if (redeem) {
+      if (!customer) fail("សូមជ្រើសអតិថិជន / Choose the customer");
+      if (!loyalty.enabled) fail("ពិន្ទុត្រូវបានបិទ / Points are off");
+      if (redeem < loyalty.min_redeem_points) fail(`${L2("ប្រើយ៉ាងតិច", "use at least")} ${loyalty.min_redeem_points} ${L2("ពិន្ទុ", "points")}`);
+      if (redeem > balance) fail(`${L2("ពិន្ទុមិនគ្រប់", "Not enough points")} (${balance})`);
+      redeemUsd = r2(redeem * loyalty.point_value_usd);
+      if (redeemUsd > totals.total + 0.005) fail(L2("ពិន្ទុលើសតម្លៃវិក្កយបត្រ", "More points than the bill"));
+      pays.push({ method: POINTS_METHOD, amount: redeemUsd, reference: `${redeem} pts` });
+    }
+    // layaway deposit / exchange credit = money already in the shop (not cash today)
+    let hold = null;
+    if (b.hold_id) {
+      hold = await idb.get("holds", String(b.hold_id));
+      if (!hold) fail("រកមិនឃើញការកក់ / Layaway not found", 404);
+      if (hold.deposit_usd > 0) pays.push({ method: DEPOSIT_METHOD, amount: hold.deposit_usd, reference: `#${hold.hold_no}` });
+    }
+    let credit = null;
+    if (b.exchange_refund_id) {
+      credit = (await idb.get("refunds", String(b.exchange_refund_id))) || (await idb.all("refunds")).find((x) => x.refund_no === String(b.exchange_refund_id)) || null;
+      if (!credit || !credit.exchange) fail("រកមិនឃើញការប្តូរ / Exchange not found", 404);
+      if (credit.exchange_used) fail(`${L2("បានប្រើរួច", "Already used")}: ${credit.exchange_used}`, 409);
+      if (credit.total > 0) pays.push({ method: EXCHANGE_METHOD, amount: credit.total, reference: credit.refund_no });
+    }
     for (const p of Array.isArray(b.payments) ? b.payments : []) {
       const m = methods.get(String(p.method_id));
       if (!m) fail("វិធីបង់ប្រាក់មិនត្រឹមត្រូវ / Unknown payment method");
@@ -421,6 +641,7 @@ export const api = {
     }
     const paid = settle(totals, pays, data.setting);
     if (paid.error) fail(paid.error);
+    const earned = customer && loyalty.enabled ? Math.floor(Math.max(0, totals.total - redeemUsd) * loyalty.points_per_usd + 1e-9) : 0;
 
     const { ym } = sync.yymm();
     const invoiceNo = `${cfg.device.code}-${ym}-${String(await idb.nextSeq(`INV${ym}`)).padStart(5, "0")}`;
@@ -442,6 +663,16 @@ export const api = {
       discount_type: discount?.type || null,
       discount_value: discount?.value || 0,
       discount_total: totals.discount_total,
+      promo_total: totals.promo_total || 0,
+      promotions: totals.promotions || [],
+      customer_id: customer?.cloud_id || null,
+      customer_uuid: customer?.uuid || null,
+      customer_local: customer?._id || null,
+      customer_name: customer?.name || "",
+      customer_phone: customer?.phone || "",
+      points_earned: earned,
+      points_redeemed: redeem,
+      points_balance: customer ? balance - redeem + earned : null,
       tax_mode: totals.tax_mode,
       tax_rate: totals.tax_rate,
       tax_name: data.setting?.tax_name || "VAT",
@@ -456,6 +687,8 @@ export const api = {
       change_give_usd: paid.change_give_usd,
       change_give_khr: paid.change_give_khr,
       note: String(b.note || "").slice(0, 300),
+      layaway_no: hold ? String(hold.hold_no) : "",
+      exchange_refund_no: credit?.refund_no || "",
       state: "paid",
       refunded_total: 0,
       refund_status: "",
@@ -463,6 +696,8 @@ export const api = {
       sync_error: "",
     };
     await idb.put("sales", sale); // ← saved here first: the receipt never waits for the internet
+    if (hold) await idb.del("holds", hold._id);
+    if (credit) await idb.update("refunds", credit.uuid, (cur) => (cur && !cur.exchange_used ? { ...cur, exchange_used: invoiceNo } : undefined));
     for (const l of totals.lines) await sync.addStock(l.variant_id, -l.base_qty);
     sync.push().catch(() => {});
     return sale;
@@ -560,14 +795,28 @@ export const api = {
     let total = r2(out.reduce((t, l) => t + l.amount, 0));
     const everything = lines.length === s.items.filter((i) => i.qty - (i.refunded_qty || 0) > 1e-9).length && lines.every(({ i, q }) => Math.abs(q - (i.qty - (i.refunded_qty || 0))) < 1e-9);
     if (everything) total = r2(Math.min(s.total - (s.refunded_total || 0), Math.max(total, fullLeft)));
+    // part paid with points goes back as points (not money); points earned on what goes back are taken back
+    const value = total;
+    let pointsBack = 0;
+    let pointsBackUsd = 0;
+    let pointsDelta = 0;
+    if (s.customer_local || s.customer_id) {
+      const pointsUsd = (s.payments || []).filter((p) => p.code === "points").reduce((t, p) => t + (p.amount_usd || 0), 0);
+      if (pointsUsd > 0 && s.total > 0) {
+        pointsBackUsd = r2(Math.min(value, (value * pointsUsd) / s.total));
+        pointsBack = Math.round(((s.points_redeemed || 0) * value) / s.total);
+        total = r2(value - pointsBackUsd);
+      }
+      pointsDelta = pointsBack - Math.round(((s.points_earned || 0) * value) / (s.total || 1));
+    }
     const data = await sync.getData();
     const methods = data?.payment_methods || [];
-    const m = methods.find((x) => String(x._id) === String(b.method_id)) || methods.find((x) => x.type === "cash" && x.currency !== "KHR") || methods[0];
+    const m = b.exchange ? EXCHANGE_METHOD : methods.find((x) => String(x._id) === String(b.method_id)) || methods.find((x) => x.type === "cash" && x.currency !== "KHR") || methods[0];
     if (!m) fail("គ្មានវិធីបង់ប្រាក់ / No payment method");
     const rate = s.rate || Number(data?.rate?.rate) || 4100;
     const step = Number(data?.setting?.khr_rounding) || 100;
     const khrAmount = roundKhr(total * rate, step);
-    const payment = { method_id: m._id, code: m.code, name_kh: m.name_kh, name_en: m.name_en, type: m.type, currency: m.currency === "KHR" ? "KHR" : "USD", amount: m.currency === "KHR" ? khrAmount : total, amount_usd: total };
+    const payment = { method_id: m._id, code: m.code, name_kh: m.name_kh, name_en: m.name_en, type: m.type, currency: m.currency === "KHR" ? "KHR" : "USD", amount: m.currency === "KHR" ? khrAmount : total, amount_usd: total, reference: b.exchange ? L2("ប្រើទិញទំនិញថ្មី", "for new items") : "" };
     const { ym } = sync.yymm();
     const refundNo = `${cfg.device.code}-R${ym}-${String(await idb.nextSeq(`R${ym}`)).padStart(5, "0")}`;
     const refund = {
@@ -588,7 +837,13 @@ export const api = {
       total,
       rate,
       total_khr: khrAmount,
-      payments: [payment],
+      payments: total > 0 ? [payment] : [],
+      points_back: pointsBack,
+      points_back_usd: pointsBackUsd,
+      customer_local: s.customer_local || null,
+      points_delta: pointsDelta,
+      exchange: !!b.exchange,
+      exchange_used: "",
       synced: false,
       sync_error: "",
     };
@@ -596,11 +851,29 @@ export const api = {
     lines.forEach(({ k, q }) => {
       items[k].refunded_qty = r4((items[k].refunded_qty || 0) + q);
     });
-    const sale = { ...s, items, refunded_total: r2((s.refunded_total || 0) + total), refund_status: items.every((i) => i.qty - (i.refunded_qty || 0) < 1e-9) ? "full" : "partial" };
+    const sale = { ...s, items, refunded_total: r2((s.refunded_total || 0) + value), refund_status: items.every((i) => i.qty - (i.refunded_qty || 0) < 1e-9) ? "full" : "partial" };
     await idb.put("sales", sale);
     for (const l of out) await sync.addStock(l.variant_id, l.base_qty);
     sync.push().catch(() => {});
     return { refund, sale };
+  },
+
+  // exchange not finished: the credit is paid out of the drawer
+  async exchangeCash(id) {
+    const me_ = await me();
+    const rf = (await idb.get("refunds", String(id))) || (await idb.all("refunds")).find((x) => x.refund_no === String(id));
+    if (!rf || !rf.exchange) fail("រកមិនឃើញការប្តូរ / Exchange not found", 404);
+    if (rf.exchange_used) fail(`${L2("បានប្រើរួច", "Already used")}: ${rf.exchange_used}`, 409);
+    const shift = await openShift();
+    if (!shift) fail("សូមបើកវេនសិន / Open a shift first", 409);
+    await idb.update("refunds", rf.uuid, (cur) => (cur ? { ...cur, exchange_used: "cash" } : undefined));
+    const move = await addCashMove(shift, me_, { type: "out", kind: "exchange_cash", amount: rf.total, currency: "USD", note: `${L2("សងប្រាក់ (មិនប្តូរ)", "Exchange paid in cash")} ${rf.refund_no}`, ref: rf.refund_no });
+    sync.push().catch(() => {});
+    return move;
+  },
+  async openExchanges() {
+    await me();
+    return (await idb.all("refunds")).filter((r) => r.exchange && !r.exchange_used).sort((a, b) => (a.refunded_at < b.refunded_at ? 1 : -1)).slice(0, 20);
   },
 
   // ---------------- report (one day) ----------------

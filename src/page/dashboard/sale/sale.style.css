@@ -777,3 +777,18 @@ button.sl-kpi:hover {
 .sl-refund-row small {
   color: var(--md-muted);
 }
+
+/* profit + slow stock */
+.pr-margin { padding: 2px 7px; border-radius: 999px; background: #eef4f0; font-weight: 600; font-size: 12px; }
+.pr-margin.low { background: #fdecea; color: #b42318; }
+.pr-margin.high { background: #e6f6ec; color: #157f3b; }
+.sl-kind { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; border: 1px solid var(--md-border, #e3e8e5); border-radius: 12px; background: var(--md-card, #fff); cursor: pointer; color: inherit; font: inherit; }
+.sl-kind span { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; opacity: 0.75; }
+.sl-kind b small { font-weight: 500; opacity: 0.7; }
+.sl-kind.on { border-color: var(--md-primary, #1f7a4d); box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-primary, #1f7a4d) 20%, transparent); }
+.ss-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+.ss-dot.dead { background: #d92d20; }
+.ss-dot.slow { background: #f79009; }
+.sl-moves { margin-top: 10px; }
+.sl-moves small { font-size: 11px; }
+.sl-neg { color: #b42318; }

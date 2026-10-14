@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ban, BarChart3, ChevronDown, Monitor, Palette, PauseCircle, History as HistoryIcon, Languages, LogOut, Minus, Package, Percent, Plus, RefreshCw, ScanBarcode, Search, Trash2, Unplug, Wallet, X } from "lucide-react";
+import { ArrowLeftRight, Ban, BarChart3, ChevronDown, Gift, HandCoins, History as HistoryIcon, Languages, LogOut, Minus, Monitor, Package, Palette, PauseCircle, Percent, Plus, RefreshCw, ScanBarcode, Search, Star, Trash2, Unplug, UserRound, Wallet, X } from "lucide-react";
 import { api } from "../api";
 import { L, LANG, nm, setLang, usd, khr, qtyText } from "../i18n";
 import { priceOf, totals as calcTotals } from "../cart";
@@ -15,6 +15,8 @@ import StockApproveDialog from "./StockApproveDialog";
 import Report from "./Report";
 import RefundDialog from "./RefundDialog";
 import ThemeDialog from "./ThemeDialog";
+import CustomerDialog from "./CustomerDialog";
+import CashDialog from "./CashDialog";
 
 let seq = 0;
 const optionText = (v) => (v.options || []).map((o) => nm(o)).join(" / ");
@@ -27,6 +29,9 @@ export default function Sell({ status, user, refresh, onLogout }) {
   const [group, setGroup] = useState("");
   const [lines, setLines] = useState([]);
   const [discount, setDiscount] = useState(null); // { type, value, approver }
+  const [customer, setCustomer] = useState(null); // loyalty: { _id, name, phone, points … }
+  const [layaway, setLayaway] = useState(null); // resumed layaway: { id, hold_no, label, deposit }
+  const [credit, setCredit] = useState(null); // exchange credit waiting: { uuid, refund_no, amount }
   const [dialog, setDialog] = useState(null); // pay | discount | variants | receipt | close | history | menu
   const [pickProduct, setPickProduct] = useState(null);
   const [lastSale, setLastSale] = useState(null);
@@ -68,6 +73,8 @@ export default function Sell({ status, user, refresh, onLogout }) {
   }, []);
   useEffect(() => {
     load();
+    // an exchange started before (credit not used yet) comes back after a reload
+    api.openExchanges().then((x) => x?.[0] && setCredit((c) => c || { uuid: x[0].uuid, refund_no: x[0].refund_no, amount: x[0].total })).catch(() => {});
   }, [load]);
 
   const toast = (msg) => {
@@ -159,17 +166,29 @@ export default function Sell({ status, user, refresh, onLogout }) {
   const clear = () => {
     setLines([]);
     setDiscount(null);
+    setCustomer(null);
+    setLayaway(null);
     setStockOk({ approver: null, ids: [] });
   };
 
   // ---------- hold / resume ----------
-  const holdCart = async (label) => {
+  const holdCart = async (label, deposit = null) => {
+    // a resumed layaway is still saved — put it away again
+    if (layaway) {
+      toast(L(`ការកក់ #${layaway.hold_no} នៅតែរក្សាទុក`, `Layaway #${layaway.hold_no} is still kept`));
+      clear();
+      setDialog(null);
+      refresh();
+      return true;
+    }
     try {
       const r = await api.hold({
-        label,
+        label: label || (customer ? `${customer.name} ${customer.phone}` : ""),
         items: lines.map((l) => ({ variant_id: l.variant._id, unit_id: l.unit._id, qty: l.qty })),
         discount: discount ? { type: discount.type, value: discount.value } : null,
         total: t.total,
+        customer_id: customer?._id || null,
+        deposit,
       });
       clear();
       setDialog(null);
@@ -184,7 +203,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
   const resume = async (h) => {
     try {
       if (lines.length) await holdCart(""); // the cart on screen is held first
-      const taken = await api.unhold(h._id);
+      const taken = await api.resumeHold(h._id);
       const back = [];
       let missing = 0;
       taken.items.forEach((i) => {
@@ -195,6 +214,8 @@ export default function Sell({ status, user, refresh, onLogout }) {
         back.push({ key: ++seq, product: p, variant: v, unit: u, qty: i.qty });
       });
       setLines(back);
+      setCustomer(taken.customer || null);
+      setLayaway(taken.deposit_usd > 0 ? { id: taken._id, hold_no: taken.hold_no, label: taken.label, deposit: taken.deposit_usd } : null);
       setStockOk({ approver: null, ids: [] }); // asked again at Pay if still out of stock
       // a discount needs the manager's PIN again (a PIN is never stored) — a manager keeps it as is
       const d = taken.discount;
@@ -209,6 +230,20 @@ export default function Sell({ status, user, refresh, onLogout }) {
           .filter(Boolean)
           .join(" · "),
       );
+      refresh();
+    } catch (err) {
+      toast(err.message);
+    }
+  };
+
+  // exchange abandoned: the customer takes the money (out of the drawer)
+  const giveCreditCash = async () => {
+    if (!credit) return;
+    if (!window.confirm(L(`សង ${usd(credit.amount)} ជាលុយពីថតលុយ?`, `Give ${usd(credit.amount)} back in cash from the drawer?`))) return;
+    try {
+      await api.exchangeCash(credit.uuid);
+      toast(L(`សងអតិថិជន ${usd(credit.amount)}`, `Give the customer ${usd(credit.amount)}`));
+      setCredit(null);
       refresh();
     } catch (err) {
       toast(err.message);
@@ -271,7 +306,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
     };
   });
 
-  const t = cat ? calcTotals(lines, discount, cat.setting, cat.rate) : null;
+  const t = cat ? calcTotals(lines, discount, cat.setting, cat.rate, { promotions: cat.promotions, warehouse_id: cat.warehouse?._id, has_customer: !!customer, categories: cat.categories }) : null;
 
   // ---------- customer display (second screen) ----------
   const shown2 = useRef("idle"); // what the display shows now
@@ -305,6 +340,9 @@ export default function Sell({ status, user, refresh, onLogout }) {
     total: t.total,
     total_khr: t.totalKhr,
     rate: t.rate,
+    promo_total: t.promoTotal,
+    promotions: (t.promotions || []).map((p) => ({ name_kh: p.name_kh, name_en: p.name_en, amount: p.amount })),
+    customer: customer ? { name: customer.name, points: customer.points } : null,
   });
   useEffect(() => {
     if (!t || dialog === "pay" || dialog === "receipt") return undefined;
@@ -312,7 +350,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
     const timer = setTimeout(() => show(lines.length ? "cart" : "idle", lines.length ? cartView() : {}), 120);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lines, discount, dialog, cat]);
+  }, [lines, discount, dialog, cat, customer]);
   const openDisplay = () => {
     setDialog(null);
     window.open(`${window.location.origin}/cloud/pos/display`, "pos-customer-display", "popup=yes,width=1280,height=800");
@@ -336,9 +374,10 @@ export default function Sell({ status, user, refresh, onLogout }) {
   };
 
   const done = (sale) => {
-    show("done", { invoice_no: sale.invoice_no, total: sale.total, total_khr: sale.total_khr, paid: sale.paid_usd, change: sale.change_usd, give_usd: sale.change_give_usd, give_khr: sale.change_give_khr });
+    show("done", { invoice_no: sale.invoice_no, total: sale.total, total_khr: sale.total_khr, paid: sale.paid_usd, change: sale.change_usd, give_usd: sale.change_give_usd, give_khr: sale.change_give_khr, promo_total: sale.promo_total || 0, customer: sale.customer_name ? { name: sale.customer_name, earned: sale.points_earned, points: sale.points_balance } : null });
     setLastSale(sale);
     clear();
+    if (sale.exchange_refund_no) setCredit(null);
     setDialog("receipt");
     refresh();
     load(); // stock on the cards
@@ -409,6 +448,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
                 <button type="button" onClick={() => setDialog("report")}><BarChart3 size={17} />{user.is_manager ? L("របាយការណ៍លក់", "Sales report") : L("របាយការណ៍របស់ខ្ញុំ", "My report")}</button>
                 <button type="button" onClick={openDisplay}><Monitor size={17} />{L("អេក្រង់អតិថិជន", "Customer display")}{status.display_screens ? " ✓" : ""}</button>
                 <button type="button" onClick={() => setDialog("holds")}><PauseCircle size={17} />{L("កន្ត្រកដែលរក្សាទុក", "Held carts")}{status.held_carts ? ` (${status.held_carts})` : ""}</button>
+                <button type="button" onClick={() => setDialog("cash")}><HandCoins size={17} />{L("ដាក់ / ដកលុយ", "Cash in / out")}</button>
                 <button type="button" onClick={() => setDialog("close")}><Wallet size={17} />{L("បិទវេន", "Close shift")}</button>
                 <button type="button" onClick={() => setDialog("theme")}><Palette size={17} />{L("ពណ៌របស់ខ្ញុំ", "My colours")}</button>
                 <button type="button" onClick={() => setLang(LANG === "kh" ? "en" : "kh")}><Languages size={17} />{LANG === "kh" ? "English" : "ខ្មែរ"}</button>
@@ -464,6 +504,10 @@ export default function Sell({ status, user, refresh, onLogout }) {
         <div className="pos-cart-head">
           <b>{L("កន្ត្រក", "Cart")} {t.count ? `· ${qtyText(t.count)}` : ""}</b>
           <span className="pos-cart-tools">
+            <button type="button" className={`pos-cust-btn ${customer ? "on" : ""}`} onClick={() => setDialog("customer")} title={L("អតិថិជន (ពិន្ទុ)", "Customer (points)")}>
+              <UserRound size={15} />
+              {customer ? <>{customer.name} <em><Star size={11} /> {customer.points}</em></> : L("អតិថិជន", "Customer")}
+            </button>
             {status.held_carts > 0 && (
               <button type="button" className="pos-held" onClick={() => setDialog("holds")} title={L("កន្ត្រកដែលរក្សាទុក", "Held carts")}>
                 <PauseCircle size={15} /> {L("រក្សាទុក", "Held")} <em>{status.held_carts}</em>
@@ -472,6 +516,19 @@ export default function Sell({ status, user, refresh, onLogout }) {
             {lines.length > 0 && <button type="button" className="pos-link danger" onClick={clear}><Trash2 size={15} /> {L("សម្អាត", "Clear")}</button>}
           </span>
         </div>
+        {credit && (
+          <div className="pos-credit">
+            <ArrowLeftRight size={16} />
+            <span><b>{L("ប្តូរទំនិញ", "Exchange")} · {usd(credit.amount)}</b><small>{credit.refund_no} — {L("ស្កេនទំនិញថ្មី ហើយគិតលុយ", "scan the new items, then Pay")}</small></span>
+            <button type="button" className="pos-link danger" onClick={giveCreditCash}>{L("សងជាលុយវិញ", "Give cash instead")}</button>
+          </div>
+        )}
+        {layaway && (
+          <div className="pos-credit lay">
+            <HandCoins size={16} />
+            <span><b>{L("ការកក់", "Layaway")} #{layaway.hold_no} · {L("បានកក់", "paid")} {usd(layaway.deposit)}</b><small>{layaway.label}</small></span>
+          </div>
+        )}
         <div className="pos-lines">
           {!lines.length && (
             <div className="pos-empty-cart">
@@ -501,6 +558,7 @@ export default function Sell({ status, user, refresh, onLogout }) {
                     <span className="pos-line-out">{L(`អស់ស្តុក (នៅ ${qtyText(l.variant.stock)})`, `Out of stock (${qtyText(l.variant.stock)} left)`)}{stockOk.ids.includes(l.variant._id) ? ` · ${L("បានអនុញ្ញាត", "allowed")}` : ""}</span>
                   )}
                   <span className="pos-line-price">{price === undefined ? <em>{L("គ្មានតម្លៃ", "No price")}</em> : `${usd(price)} × ${qtyText(l.qty)}`}</span>
+                  {t.linePromo?.[l.key] > 0 && <span className="pos-line-promo"><Gift size={12} /> −{usd(t.linePromo[l.key])}</span>}
                 </div>
                 <div className="pos-line-side">
                   <b>{price === undefined ? "-" : usd(price * l.qty)}</b>
@@ -526,6 +584,9 @@ export default function Sell({ status, user, refresh, onLogout }) {
 
         <div className="pos-sum">
           <div><span>{L("សរុបរង", "Subtotal")}</span><span>{usd(t.subtotal)}</span></div>
+          {(t.promotions || []).map((p) => (
+            <div key={String(p.promo_id)} className="pos-sum-promo"><span><Gift size={14} /> {L(p.name_kh, p.name_en || p.name_kh)}</span><span>−{usd(p.amount)}</span></div>
+          ))}
           <div className="pos-sum-disc">
             <button type="button" className="pos-link" onClick={() => setDialog("discount")} disabled={!lines.length}>
               <Percent size={14} /> {discount ? (discount.type === "percent" ? `${L("បញ្ចុះ", "Discount")} ${discount.value}%` : L("បញ្ចុះតម្លៃ", "Discount")) : L("បញ្ចុះតម្លៃ", "Add discount")}
@@ -579,14 +640,16 @@ export default function Sell({ status, user, refresh, onLogout }) {
           onApproved={(a) => { const go = ask.then; setAsk(null); go(a); toast(L(`អនុញ្ញាតដោយ ${a.name}`, `Allowed by ${a.name}`)); }}
         />
       )}
-      {dialog === "hold" && <HoldNameDialog count={t.count} total={t.total} onClose={() => setDialog(null)} onHold={holdCart} />}
+      {dialog === "hold" && <HoldNameDialog count={t.count} total={t.total} customer={customer} onClose={() => setDialog(null)} onHold={holdCart} />}
+      {dialog === "cash" && <CashDialog user={user} onClose={() => setDialog(null)} onSaved={() => refresh()} />}
       {dialog === "theme" && <ThemeDialog onClose={() => setDialog(null)} />}
-      {dialog === "holds" && <HoldList cartHasItems={lines.length > 0} onClose={() => setDialog(null)} onResume={resume} />}
+      {dialog === "customer" && <CustomerDialog current={customer} onClose={() => setDialog(null)} onPick={(c) => { setCustomer(c); setDialog(null); }} />}
+      {dialog === "holds" && <HoldList user={user} cartHasItems={lines.length > 0} onClose={() => setDialog(null)} onResume={resume} />}
             {dialog === "discount" && (
         <DiscountDialog user={user} current={discount} subtotal={t.subtotal} onClose={() => setDialog(null)} onApply={(d) => { setDiscount(d); setDialog(null); }} />
       )}
       {dialog === "pay" && (
-        <PayDialog catalog={cat} totals={t} lines={lines} discount={discount} stockApprover={stockOk.approver} onClose={() => setDialog(null)} onDone={done} onState={(pay) => show("pay", { ...cartView(), pay })} />
+        <PayDialog catalog={cat} totals={t} lines={lines} discount={discount} customer={customer} layaway={layaway} credit={credit} stockApprover={stockOk.approver} onClose={() => setDialog(null)} onDone={done} onState={(pay) => show("pay", { ...cartView(), pay })} />
       )}
       {dialog === "receipt" && lastSale && (
         <Receipt sale={lastSale} catalog={cat} onClose={() => { setDialog(null); searchRef.current?.focus(); }} autoPrint />
@@ -616,7 +679,16 @@ export default function Sell({ status, user, refresh, onLogout }) {
           catalog={cat}
           user={user}
           onClose={() => setDialog("receipt-old")}
-          onDone={(s) => { setLastSale(s); refresh(); load(); setDialog("history"); }}
+          onDone={(s, rf) => {
+            setLastSale(s);
+            refresh();
+            load();
+            if (rf?.exchange) {
+              setCredit({ uuid: rf.uuid, refund_no: rf.refund_no, amount: rf.total });
+              setDialog(null);
+              toast(L(`ប្តូរទំនិញ: ឥណទាន ${usd(rf.total)} — ស្កេនទំនិញថ្មី`, `Exchange: ${usd(rf.total)} credit — scan the new items`));
+            } else setDialog("history");
+          }}
         />
       )}
       {dialog === "report" && <Report user={user} catalog={cat} onClose={() => setDialog(null)} printSlip={printReceipt} />}

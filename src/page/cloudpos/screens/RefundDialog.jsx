@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Minus, Plus, Printer, RotateCcw, X } from "lucide-react";
+import { ArrowLeftRight, Minus, Plus, Printer, RotateCcw, X } from "lucide-react";
 import { api } from "../api";
 import { L, LANG, nm, usd, khr, qtyText, dateTimeText } from "../i18n";
 import { r2, roundKhr } from "../cart";
@@ -64,6 +64,7 @@ export default function RefundDialog({ sale, catalog, user, onClose, onDone }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(null);
+  const [exchange, setExchange] = useState(false); // keep the money as credit for new items
   const slip = useRef(null);
 
   useEffect(() => {
@@ -98,6 +99,7 @@ export default function RefundDialog({ sale, catalog, user, onClose, onDone }) {
         ...(all ? { all: true } : { lines: qty.map((q, index) => ({ index, qty: q })).filter((l) => l.qty > 0) }),
         reason: reason.trim(),
         method_id: methodId,
+        exchange,
         approver: user.is_manager ? null : { user_id: who, pin },
       });
       setDone(r);
@@ -115,11 +117,15 @@ export default function RefundDialog({ sale, catalog, user, onClose, onDone }) {
       <div className="pos-back pos-back-top">
         <div className="pos-dialog pos-rcdlg" onMouseDown={(e) => e.stopPropagation()}>
           <div className="pos-dialog-head"><h3><RotateCcw size={20} /> {done.refund.kind === "void" ? L("បានលុបចោល", "Voided") : L("បានសងប្រាក់", "Refunded")}</h3></div>
-          <div className="pos-change-big">{L("សងអតិថិជន", "Give back")}: <b>{done.refund.payments.map((p) => (p.currency === "KHR" ? khr(p.amount) : usd(p.amount))).join(" + ")}</b></div>
+          {done.refund.exchange ? (
+            <div className="pos-change-big">{L("ឥណទានប្តូរទំនិញ", "Exchange credit")}: <b>{usd(done.refund.total)}</b> <small>{L("— កុំសងលុយ ស្កេនទំនិញថ្មី", "— no cash back, scan the new items")}</small></div>
+          ) : (
+            <div className="pos-change-big">{L("សងអតិថិជន", "Give back")}: <b>{done.refund.payments.map((p) => (p.currency === "KHR" ? khr(p.amount) : usd(p.amount))).join(" + ")}</b></div>
+          )}
           <div className="pos-rc-preview" ref={slip}><RefundPaper refund={done.refund} catalog={catalog} /></div>
           <div className="pos-dialog-foot">
             <button type="button" className="pos-btn pos-btn-ghost" onClick={() => printReceipt(slip.current)}><Printer size={18} /> {L("បោះពុម្ព", "Print")}</button>
-            <button type="button" className="pos-btn pos-btn-primary pos-btn-lg" onClick={() => onDone(done.sale)}>{L("រួចរាល់", "Done")}</button>
+            <button type="button" className="pos-btn pos-btn-primary pos-btn-lg" onClick={() => onDone(done.sale, done.refund)}>{L("រួចរាល់", "Done")}</button>
           </div>
         </div>
       </div>
@@ -166,8 +172,12 @@ export default function RefundDialog({ sale, catalog, user, onClose, onDone }) {
             </div>
             <input className="pos-ref" value={reason} maxLength={200} onChange={(e) => setReason(e.target.value)} placeholder={L("មូលហេតុ (ចាំបាច់)", "Reason (required)")} />
           </div>
+          <div className="pos-seg pos-rf-mode">
+            <button type="button" className={!exchange ? "on" : ""} onClick={() => setExchange(false)}><RotateCcw size={16} /> {L("សងលុយ", "Money back")}</button>
+            <button type="button" className={exchange ? "on in" : ""} onClick={() => setExchange(true)}><ArrowLeftRight size={16} /> {L("ប្តូរយកទំនិញផ្សេង", "Exchange for other items")}</button>
+          </div>
           <div className="pos-rf-pay">
-            <label>
+            <label style={exchange ? { visibility: "hidden" } : undefined}>
               <span>{L("សងតាម", "Give back by")}</span>
               <select value={methodId} onChange={(e) => setMethodId(e.target.value)}>
                 {methods.map((m) => <option key={m._id} value={String(m._id)}>{nm(m)}</option>)}
@@ -193,8 +203,8 @@ export default function RefundDialog({ sale, catalog, user, onClose, onDone }) {
         </div>
         <div className="pos-dialog-foot">
           <button type="button" className="pos-btn pos-btn-ghost" onClick={onClose} disabled={busy}>{L("ត្រឡប់", "Back")}</button>
-          <button type="button" className="pos-btn pos-btn-danger pos-btn-lg" onClick={go} disabled={busy || !(total > 0)}>
-            {busy ? "…" : all && !sale.refunded_total ? L(`លុបចោល · សង ${usd(total)}`, `Void · give back ${usd(total)}`) : L(`សង ${usd(total)}`, `Refund ${usd(total)}`)}
+          <button type="button" className={`pos-btn pos-btn-lg ${exchange ? "pos-btn-primary" : "pos-btn-danger"}`} onClick={go} disabled={busy || !(total > 0)}>
+            {busy ? "…" : exchange ? L(`ប្តូរ · ឥណទាន ${usd(total)}`, `Exchange · ${usd(total)} credit`) : all && !sale.refunded_total ? L(`លុបចោល · សង ${usd(total)}`, `Void · give back ${usd(total)}`) : L(`សង ${usd(total)}`, `Refund ${usd(total)}`)}
           </button>
         </div>
       </div>

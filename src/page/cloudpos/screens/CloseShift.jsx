@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Printer, X } from "lucide-react";
 import { api } from "../api";
+import { KIND_NAME } from "./CashDialog";
 import { L, LANG, nm, usd, khr, dateTimeText } from "../i18n";
 
 // End of shift: count the drawer (USD + KHR) → expected vs counted → close → print the shift report (Z).
@@ -58,6 +59,13 @@ export default function CloseShift({ catalog, onClose, onClosed, printZ }) {
                 <div key={m.code}><span>{LANG === "en" ? m.name_en : m.name_kh} ({m.count})</span><b>{m.currency === "KHR" ? khr(m.amount) : usd(m.amount)}</b></div>
               ))}
             </div>
+            {t.cash_move_count > 0 && (
+              <div className="pos-zmethods pos-zmoves">
+                {(t.cash_move_kinds || []).map((k) => (
+                  <div key={`${k.type}-${k.kind}`}><span>{k.type === "out" ? "↑" : "↓"} {KIND_NAME[k.kind] || k.kind} ({k.count})</span><b className={k.type === "out" ? "pos-neg" : ""}>{k.type === "out" ? "−" : "+"}{usd(k.amount_usd)}</b></div>
+                ))}
+              </div>
+            )}
             <p>{L("រាប់ប្រាក់ក្នុងថតលុយឥឡូវ", "Count the cash in the drawer now")}</p>
             <div className="pos-shift-fields">
               <label><span>USD · {L("គួរមាន", "expected")} {usd(t.expected_usd)}</span><input inputMode="decimal" value={cUsd} onChange={num(setUsd)} placeholder="0.00" autoFocus /></label>
@@ -92,6 +100,7 @@ export default function CloseShift({ catalog, onClose, onClosed, printZ }) {
                 <div className="rc-pay">
                   {r.methods.map((m) => <div key={m.code}><span>{LANG === "en" ? m.name_en : m.name_kh} ({m.count})</span><span>{m.currency === "KHR" ? khr(m.amount) : usd(m.amount)}</span></div>)}
                   {(r.refund_methods || []).map((m) => <div key={`rf-${m.code}`}><span>{L("សង", "Refund")} {LANG === "en" ? m.name_en : m.name_kh} ({m.count})</span><span>−{m.currency === "KHR" ? khr(m.amount) : usd(m.amount)}</span></div>)}
+                  {(closed.cash_moves || []).map((m) => <div key={m.uuid}><span>{m.type === "out" ? "↑" : "↓"} {KIND_NAME[m.kind] || m.kind}{m.note ? ` · ${m.note}` : ""}</span><span>{m.type === "out" ? "−" : "+"}{m.currency === "KHR" ? khr(m.amount) : usd(m.amount)}</span></div>)}
                 </div>
                 <div className="rc-sum">
                   <div><span>{L("ប្រាក់ដើម", "Float")}</span><span>{usd(closed.opening_usd)} + {khr(closed.opening_khr)}</span></div>

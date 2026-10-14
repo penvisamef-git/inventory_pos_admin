@@ -237,6 +237,24 @@
   font-weight: 700;
 }
 
+/* ---------- customer + points / savings ---------- */
+.rc-cust {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rc-cust > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rc-cust-bal {
+  font-weight: 700;
+}
+.rc-saved {
+  text-align: center;
+}
+
 /* ---------- footer ---------- */
 .rc-foot {
   display: flex;

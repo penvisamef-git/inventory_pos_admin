@@ -22,7 +22,7 @@ const COLUMNS = [
   { key: "type", label: L("ប្រភេទ", "Type"), render: (row) => <span className="md-badge md-badge-gold">{labelOf(PAYMENT_TYPE_OPTIONS, row.type)}</span> },
   { key: "currency", label: L("រូបិយប័ណ្ណ", "Currency"), render: (row) => labelOf(CURRENCY_OPTIONS, row.currency) },
   { key: "requires_reference", label: L("ត្រូវការលេខយោង", "Needs reference"), render: (row) => yesNo(row.requires_reference) },
-  { key: "online_mode", label: L("QR មានចំនួនទឹកប្រាក់", "QR with amount"), render: (row) => yesNo(row.online_mode) },
+  { key: "online_mode", label: L("QR មានចំនួនទឹកប្រាក់", "QR with amount"), render: (row) => (row.online_mode && row.bakong_account_id ? <span className="md-badge md-badge-on">KHQR · {row.bakong_account_id}</span> : yesNo(false)) },
   {
     key: "qr_image",
     label: L("QR អតិថិជនស្កេន", "QR to scan"),
@@ -39,7 +39,17 @@ const FIELDS = [
   { key: "name_en", label: L("ឈ្មោះ (អង់គ្លេស)", "Name (English)"), placeholder: "Cash USD" },
   { key: "currency", label: L("រូបិយប័ណ្ណ", "Currency"), type: "select", noEmpty: true, default: "any", options: CURRENCY_OPTIONS },
   { key: "requires_reference", label: L("អ្នកគិតលុយត្រូវបញ្ចូលលេខយោង (QR ពេលគ្មានអ៊ីនធឺណិត)", "Cashier must enter a reference no. (QR when offline)"), type: "checkbox", full: true },
-  { key: "online_mode", label: L("បង្កើត QR មានចំនួនទឹកប្រាក់ពេលមានអ៊ីនធឺណិត (KHQR / ABA)", "Make a QR with the amount when online (KHQR / ABA)"), type: "checkbox", full: true },
+  { key: "online_mode", label: L("Bakong KHQR មានចំនួនទឹកប្រាក់ — បង់រួច POS បញ្ចប់ការលក់ដោយខ្លួនឯង", "Bakong KHQR with the amount — the POS finishes the sale by itself once paid"), type: "checkbox", full: true },
+  {
+    key: "bakong_account_id",
+    label: L("គណនី Bakong", "Bakong account ID"),
+    placeholder: "kidsshop@aclb",
+    required: true,
+    showIf: (form) => !!form.online_mode,
+    hint: L("ដូច name@bank (ឧ. kidsshop@aclb, kidsshop@abaa) — មើលក្នុងកម្មវិធី Bakong ឬធនាគារ", "Like name@bank (e.g. kidsshop@aclb, kidsshop@abaa) — see the Bakong or bank app"),
+  },
+  { key: "merchant_name", label: L("ឈ្មោះអាជីវកម្ម (អក្សរអង់គ្លេស)", "Merchant name (English letters)"), placeholder: "Kids Shop", showIf: (form) => !!form.online_mode },
+  { key: "merchant_city", label: L("ទីក្រុង", "City"), placeholder: "Phnom Penh", showIf: (form) => !!form.online_mode },
   {
     key: "qr_enabled",
     label: L("បង្ហាញ QR ឱ្យអតិថិជនស្កេនបង់ (អេក្រង់អតិថិជន)", "Show a QR for the customer to scan and pay (customer display)"),
